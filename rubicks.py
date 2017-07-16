@@ -8,11 +8,11 @@ cam_dx = 0
 cam_dy = 0
 cam_dz = 0
 
-g = 0.05 # box thinness
+g = 0.10 # box thinness
 w = 0.45 # size of surfaces
-z = 0.75 # z distance of surfaces
+z = 0.70 # z distance of surfaces
 d = 0.5  # x/y distance of surfaces
-axle_pos = 0.61 # position of axles
+axle_pos = 0.60 # position of axles
 c = 0.2  # color coefficient of axles
 axle_opacity = 0.2
 d_theta = 5
@@ -26,13 +26,6 @@ def collision(box1, box2):
 	#	(box1.pos.x >= box2.pos.x - box2.length and box1.pos.x <= box2.pos.x + box2.length) and \
 	#	(box1.pos.y >= box2.pos.y - box2.height and box1.pos.y <= box2.pos.y + box2.height) and \
 	#	(box1.pos.z >= box2.pos.z - box2.width  and box1.pos.z <= box2.pos.z + box2.width )
-
-class Block(sphere):
-	def __init__(self, px,py,pz):
-		sphere.__init__(self, pos=(px*z,py*z,pz*z), radius=w/4 )
-		self.length = self.radius*2
-		self.width  = self.radius*2
-		self.height = self.radius*2
 
 class Face:
 	def __init__(self, c, rotate, sign):
@@ -55,9 +48,41 @@ class Face:
 				self.surfaces.append( surface )
 				#lab = label( pos=surface.pos, text="%d,%d,%d" % (normal,i,j) )
 
+class Block(sphere):
+	def __init__(self, px,py,pz):
+		sphere.__init__(self, pos=(px*z, py*z, pz*z), radius=w/4 )
+		self.opacity = 0.5
+		self.surfaces = []
+
+	def collision(self, box):
+		return \
+			abs(self.pos.x - box.pos.x) * 2 <= abs(2*self.radius + box.length) and \
+			abs(self.pos.y - box.pos.y) * 2 <= abs(2*self.radius + box.height) and \
+			abs(self.pos.z - box.pos.z) * 2 <= abs(2*self.radius + box.width )
+
+	#def collision(self, box):
+	#	bminx = min(box.pos[0] - box.size[0], box.pos[0] + box.size[0])
+	#	bmaxx = max(box.pos[0] - box.size[0], box.pos[0] + box.size[0])
+	#	bminy = min(box.pos[1] - box.size[1], box.pos[1] + box.size[1])
+	#	bmaxy = max(box.pos[1] - box.size[1], box.pos[1] + box.size[1])
+	#	bminz = min(box.pos[2] - box.size[2], box.pos[2] + box.size[2])
+	#	bmaxz = max(box.pos[2] - box.size[2], box.pos[2] + box.size[2])
+	#	bx = max(bminx, min(self.x, bmaxx))
+	#	by = max(bminy, min(self.y, bmaxy))
+	#	bz = max(bminz, min(self.z, bmaxz))
+
+	#	distance = sqrt( \
+	#		(bx - self.x) ** 2 + \
+	#		(by - self.y) ** 2 + \
+	#		(bz - self.z) ** 2 )
+  
+	#	return distance < self.radius
+
+
 class Cube:
 	def __init__(self):
 		self.clockwise = 1
+		self.centroid = box( pos=( 0, 0, 0 ), size=( 1.2*z, 1.2*z, 1.2*z ), color=( 0, 0, 0 ) )
 
 		self.faces = []
 		self.faces.append( Face( color.white,  (1,0,0), -1) )
@@ -86,8 +111,6 @@ class Cube:
 						continue
 					self.blocks.append( Block( i, j, k ) )
 
-		self.centroid = box( pos=( 0, 0, 0 ), size=( 1.2*z, 1.2*z, 1.2*z ), color=( 0, 0, 0 ) )
-
 		self.rotating_time = 0
 		self.rotating_surfaces = []
 		self.rotating_blocks = []
@@ -95,6 +118,18 @@ class Cube:
 		for axle in self.axles:
 			axle.opacity = axle_opacity
 
+		self.load_surfaces_into_blocks()
+
+		self.selected_block = len(self.blocks) - 1
+		self.previous_colors = []
+
+
+	def load_surfaces_into_blocks(self):
+		for block in self.blocks:
+			for face in self.faces:
+				for surface in face.surfaces:
+					if block.collision(surface):
+						block.surfaces.append(surface)
 
 	def rotate(self, d):
 		axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
@@ -113,22 +148,28 @@ class Cube:
 		self.start_rotation( axle_index )
 
 	def start_rotation(self, axle):
+		self.rotating_axle = axle
 		self.rotating_surfaces = []
 		self.rotating_blocks = []
-		for face in self.faces:
-			for s in face.surfaces:
-				if collision(s, axle):
-					self.rotating_surfaces.append(s)
-					print s.coordinate
-					for block in self.blocks:
-						if collision(s, block) and block not in self.rotating_blocks:
-							self.rotating_blocks.append(block)
 
+		for block in self.blocks:
+			if block.collision(axle):
+				self.rotating_blocks.append(block)
+				for surface in block.surfaces:
+					print "surface"
+					if surface not in self.rotating_surfaces:
+						self.rotating_surfaces.append(surface)
+					else:
+						print "attempting to add surface again"
 
-		if len(self.rotating_surfaces) < 21:
-			print "missing piece"
+		#for face in self.faces:
+		#	for s in face.surfaces:
+		#		if collision(s, axle):
+		#			self.rotating_surfaces.append(s)
+
+		if len(self.rotating_surfaces) != 21:
+			print "wrong number of surfaces %d" % len(self.rotating_surfaces)
 		axle.opacity = 1.0
-		self.rotating_axle = axle
 
 	def do_rotation(self):
 		if self.rotating_axle:
@@ -149,13 +190,30 @@ class Cube:
 		self.rotating_time = 0
 		for axle in self.axles:
 			axle.opacity = axle_opacity
-		#self.print_positions()
 
 	def print_positions(self):
 		for face in self.faces:
 			print
 			for surface in face.surfaces:
 				print surface.pos
+
+	
+	def select_block(self, select):
+		select %= len(self.blocks)
+		if len(self.previous_colors) == len(self.blocks[self.selected_block].surfaces):
+			n = 0
+			self.blocks[self.selected_block].color = (1,1,1)
+			for s in self.blocks[self.selected_block].surfaces:
+				s.color = self.previous_colors[n]
+				n += 1
+
+		self.selected_block = select
+		self.previous_colors = []
+		for s in self.blocks[self.selected_block].surfaces:
+			self.previous_colors.append( s.color )
+			s.color = (0,1,1)
+		self.blocks[self.selected_block].color = (1,0,1)
+
 
 def rotate_camera():
 	global rotating_camera, camera_time, cam_dx, cam_dy, cam_dz
@@ -173,7 +231,7 @@ def rotate_camera():
 			rotating_camera = False
 
 def keydown(evt):
-	global rotating_camera, cam_dx, cam_dy, cam_dz
+	global rotating_camera, cam_dx, cam_dy, cam_dz, selected_block
 	k = evt.key
 	print vars(evt)
 	if evt.alt:
@@ -190,7 +248,16 @@ def keydown(evt):
 			rotating_camera = True
 			cam_dx = -radians(5)
 		return
-	if not evt.shift:
+	if evt.shift:
+		if k == 'up':
+			cube.rotate('R')
+		elif k == 'down':
+			cube.rotate('r')
+		elif k == 'right':
+			cube.rotate('D')
+		elif k == 'left':
+			cube.rotate('d')
+	else:
 		if k == 'esc':
 			exit()
 		elif k == 'left':
@@ -209,24 +276,35 @@ def keydown(evt):
 			cube.rotate('b')
 		elif k == 'page down':
 			cube.rotate('B')
-	else:
-		if k == 'up':
-			cube.rotate('R')
-		elif k == 'down':
-			cube.rotate('r')
-		elif k == 'right':
-			cube.rotate('D')
-		elif k == 'left':
-			cube.rotate('d')
+		elif k in ('1','2','3','4','5','6','7','8','9','0'):
+			block = cube.blocks[int(k)]
+			block.color = (1,0,1)
+			for s in block.surfaces:
+				print s.pos
+		elif k == '.':
+			select = cube.selected_block + 1
+			cube.select_block(select)
+		elif k == ',':
+			select = cube.selected_block + len(cube.blocks) - 1
+			cube.select_block(select)
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )
 scene.forward = (0.5, -0.5, -1)
 scene.bind('keydown', keydown)
 
 cube = Cube()
-cube.print_positions()
+#cube.print_positions()
+
+#print cube.blocks[0].pos
+#print cube.faces[1].surfaces[0].pos
+#print cube.faces[2].surfaces[0].pos
+#print cube.faces[5].surfaces[6].pos
+#for s in cube.blocks[0].surfaces:
+#	s.color = (0,1,1)
 
 while 1:
 	rate(60)
 	cube.do_rotation()
 	rotate_camera()
+
+

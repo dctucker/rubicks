@@ -2,13 +2,13 @@
 
 from visual import *
 from cube import *
+from solver import *
 
 rotating_camera = False
 camera_time = 0
 cam_dx = 0
 cam_dy = 0
 cam_dz = 0
-
 
 def rotate_camera():
 	global rotating_camera, camera_time, cam_dx, cam_dy, cam_dz
@@ -82,12 +82,33 @@ def keydown(evt):
 		elif k == ',':
 			select = cube.selected_block + len(cube.blocks) - 1
 			cube.select_block(select)
+		elif k == '\n':
+			solver.white_cross()
+
+def check_queue():
+	if len(queue) > 0:
+		if cube.rotating_axle is None:
+			rot = queue.pop()
+			cube.rotate(rot)
+	else:
+		Cube.d_theta = Cube.normal_d_theta
+
+def scramble():
+	Cube.d_theta = 15
+	for t in range(10):
+		rnd = random.randint(0,5)
+		queue.append(['u','d','l','r','f','b'][rnd])
+
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )
+scene.fov = radians(30)
 scene.forward = (0.5, -0.5, -1)
 scene.bind('keydown', keydown)
 
+queue = []
 cube = Cube()
+solver = Solver(cube, queue)
+#scramble()
 #cube.print_positions()
 
 #print cube.blocks[0].pos
@@ -99,7 +120,7 @@ cube = Cube()
 
 while 1:
 	rate(60)
+	check_queue()
 	cube.do_rotation()
 	rotate_camera()
-
-
+	solver.tick()

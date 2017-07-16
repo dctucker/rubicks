@@ -2,11 +2,17 @@
 
 from visual import *
 
+rotating_camera = False
+camera_time = 0
+cam_dx = 0
+cam_dy = 0
+cam_dz = 0
+
 g = 0.05 # box thinness
 w = 0.45 # size of surfaces
 z = 0.75 # z distance of surfaces
 d = 0.5  # x/y distance of surfaces
-k = 0.61 # position of axles
+axle_pos = 0.61 # position of axles
 c = 0.2  # color coefficient of axles
 axle_opacity = 0.2
 d_theta = 5
@@ -21,10 +27,18 @@ def collision(box1, box2):
 	#	(box1.pos.y >= box2.pos.y - box2.height and box1.pos.y <= box2.pos.y + box2.height) and \
 	#	(box1.pos.z >= box2.pos.z - box2.width  and box1.pos.z <= box2.pos.z + box2.width )
 
+class Block(sphere):
+	def __init__(self, px,py,pz):
+		sphere.__init__(self, pos=(px*z,py*z,pz*z), radius=w/4 )
+		self.length = self.radius*2
+		self.width  = self.radius*2
+		self.height = self.radius*2
+
 class Face:
 	def __init__(self, c, rotate, sign):
 		self.color = c
 		self.surfaces = []
+		self.labels = []
 		size = (w,w,g)
 		if sign == 0:
 			normal = 3
@@ -39,6 +53,7 @@ class Face:
 				surface.opacity = 0.9
 				surface.coordinate = (normal, i, j)
 				self.surfaces.append( surface )
+				#lab = label( pos=surface.pos, text="%d,%d,%d" % (normal,i,j) )
 
 class Cube:
 	def __init__(self):
@@ -54,6 +69,7 @@ class Cube:
 
 		z2 = z * 2
 		z3 = z / 3.0
+		k = axle_pos
 		self.axles = []
 		self.axles.append( box( pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=(c, c, c) ) )
 		self.axles.append( box( pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=(c, c, 0) ) )
@@ -62,10 +78,19 @@ class Cube:
 		self.axles.append( box( pos=(  0, 0, k ), size=( z2, z2, z3 ), color=(0, 0, c) ) )
 		self.axles.append( box( pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=(0, c, 0) ) )
 
+		self.blocks = []
+		for i in [-1, 0, 1]:
+			for j in [-1, 0, 1]:
+				for k in [-1, 0, 1]:
+					if i == 0 and j == 0 and k == 0:
+						continue
+					self.blocks.append( Block( i, j, k ) )
+
 		self.centroid = box( pos=( 0, 0, 0 ), size=( 1.2*z, 1.2*z, 1.2*z ), color=( 0, 0, 0 ) )
 
 		self.rotating_time = 0
 		self.rotating_surfaces = []
+		self.rotating_blocks = []
 		self.rotating_axle = None
 		for axle in self.axles:
 			axle.opacity = axle_opacity
@@ -89,11 +114,16 @@ class Cube:
 
 	def start_rotation(self, axle):
 		self.rotating_surfaces = []
+		self.rotating_blocks = []
 		for face in self.faces:
 			for s in face.surfaces:
 				if collision(s, axle):
 					self.rotating_surfaces.append(s)
 					print s.coordinate
+					for block in self.blocks:
+						if collision(s, block) and block not in self.rotating_blocks:
+							self.rotating_blocks.append(block)
+
 
 		if len(self.rotating_surfaces) < 21:
 			print "missing piece"
@@ -102,9 +132,12 @@ class Cube:
 
 	def do_rotation(self):
 		if self.rotating_axle:
-			self.rotating_axle.rotate(angle=radians(-d_theta * self.clockwise), axis=self.rotating_axle.pos, origin=self.rotating_axle.pos)
+			axle = self.rotating_axle
+			axle.rotate(angle=radians(-d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			for s in self.rotating_surfaces:
-				s.rotate(angle=radians(-d_theta * self.clockwise), axis=self.rotating_axle.pos, origin=self.rotating_axle.pos)
+				s.rotate(angle=radians(-d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
+			for b in self.rotating_blocks:
+				b.rotate(angle=radians(-d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			self.rotating_time += d_theta
 			if self.rotating_time >= 90:
 				self.stop_rotation()
@@ -112,6 +145,7 @@ class Cube:
 	def stop_rotation(self):
 		self.rotating_axle = None
 		self.rotating_surfaces = []
+		self.rotating_blocks = []
 		self.rotating_time = 0
 		for axle in self.axles:
 			axle.opacity = axle_opacity
@@ -123,40 +157,70 @@ class Cube:
 			for surface in face.surfaces:
 				print surface.pos
 
+def rotate_camera():
+	global rotating_camera, camera_time, cam_dx, cam_dy, cam_dz
+	if rotating_camera:
+		cx = scene.forward[0]
+		cy = scene.forward[1]
+		cz = scene.forward[2]
+		scene.forward = ( cx + cam_dx, cy + cam_dy, cz + cam_dz )
+		camera_time += d_theta
+		if camera_time >= 90:
+			camera_time = 0
+			cam_dx = 0
+			cam_dy = 0
+			cam_dz = 0
+			rotating_camera = False
 
 def keydown(evt):
+	global rotating_camera, cam_dx, cam_dy, cam_dz
 	k = evt.key
 	print vars(evt)
+	if evt.alt:
+		if k == 'up':
+			rotating_camera = True
+			cam_dy = radians(5)
+		elif k == 'down':
+			rotating_camera = True
+			cam_dy = -radians(5)
+		if k == 'left':
+			rotating_camera = True
+			cam_dx = radians(5)
+		elif k == 'right':
+			rotating_camera = True
+			cam_dx = -radians(5)
+		return
 	if not evt.shift:
 		if k == 'esc':
 			exit()
-		elif k == 'up':
-			cube.rotate('U')
-		elif k == 'down':
-			cube.rotate('D')
-		elif k == 'right':
-			cube.rotate('R')
 		elif k == 'left':
-			cube.rotate('L')
-		elif k == 'page up':
-			cube.rotate('B')
-		elif k == 'page down':
-			cube.rotate('F')
-	else:
-		if k == 'up':
+			cube.rotate('U')
+		elif k == 'right':
 			cube.rotate('u')
 		elif k == 'down':
-			cube.rotate('d')
-		elif k == 'right':
-			cube.rotate('r')
-		elif k == 'left':
+			cube.rotate('L')
+		elif k == 'up':
 			cube.rotate('l')
+		elif k == 'home':
+			cube.rotate('f')
+		elif k == 'end':
+			cube.rotate('F')
 		elif k == 'page up':
 			cube.rotate('b')
 		elif k == 'page down':
-			cube.rotate('f')
+			cube.rotate('B')
+	else:
+		if k == 'up':
+			cube.rotate('R')
+		elif k == 'down':
+			cube.rotate('r')
+		elif k == 'right':
+			cube.rotate('D')
+		elif k == 'left':
+			cube.rotate('d')
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )
+scene.forward = (0.5, -0.5, -1)
 scene.bind('keydown', keydown)
 
 cube = Cube()
@@ -165,3 +229,4 @@ cube.print_positions()
 while 1:
 	rate(60)
 	cube.do_rotation()
+	rotate_camera()

@@ -8,9 +8,9 @@ cam_dx = 0
 cam_dy = 0
 cam_dz = 0
 
-g = 0.10 # box thinness
+g = 0.05 # box thinness
 w = 0.45 # size of surfaces
-z = 0.70 # z distance of surfaces
+z = 0.75 # z distance of surfaces
 d = 0.5  # x/y distance of surfaces
 axle_pos = 0.60 # position of axles
 c = 0.2  # color coefficient of axles
@@ -45,20 +45,27 @@ class Face:
 				surface.rotate( angle = sign * pi / 2.0, axis = rotate, origin = (0,0,0) )
 				surface.opacity = 0.9
 				surface.coordinate = (normal, i, j)
+				surface.expected_coordinate = (normal, i, j)
 				self.surfaces.append( surface )
 				#lab = label( pos=surface.pos, text="%d,%d,%d" % (normal,i,j) )
 
 class Block(sphere):
 	def __init__(self, px,py,pz):
-		sphere.__init__(self, pos=(px*z, py*z, pz*z), radius=w/4 )
+		self.expected_coordinate = vector(px, py, pz)
+		self.coordinate = vector(px, py, pz)
+		sphere.__init__(self, pos=(px*z, py*z, pz*z), radius=w*0.3 )
 		self.opacity = 0.5
 		self.surfaces = []
 
 	def collision(self, box):
 		return \
-			abs(self.pos.x - box.pos.x) * 2 <= abs(2*self.radius + box.length) and \
-			abs(self.pos.y - box.pos.y) * 2 <= abs(2*self.radius + box.height) and \
-			abs(self.pos.z - box.pos.z) * 2 <= abs(2*self.radius + box.width )
+			abs(self.pos.x - box.pos.x) <= (2 * self.radius + box.length*0.5) and \
+			abs(self.pos.y - box.pos.y) <= (2 * self.radius + box.height*0.5) and \
+			abs(self.pos.z - box.pos.z) <= (2 * self.radius + box.width *0.5)
+	
+	def rotate(self, angle, axis, origin):
+		self.coordinate = self.coordinate.rotate(angle=angle,axis=axis)
+		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
 	#def collision(self, box):
 	#	bminx = min(box.pos[0] - box.size[0], box.pos[0] + box.size[0])
@@ -156,7 +163,6 @@ class Cube:
 			if block.collision(axle):
 				self.rotating_blocks.append(block)
 				for surface in block.surfaces:
-					print "surface"
 					if surface not in self.rotating_surfaces:
 						self.rotating_surfaces.append(surface)
 					else:
@@ -171,6 +177,8 @@ class Cube:
 			print "wrong number of surfaces %d" % len(self.rotating_surfaces)
 		axle.opacity = 1.0
 
+		print self.rotating_blocks[0].coordinate
+
 	def do_rotation(self):
 		if self.rotating_axle:
 			axle = self.rotating_axle
@@ -184,6 +192,7 @@ class Cube:
 				self.stop_rotation()
 
 	def stop_rotation(self):
+		print self.rotating_blocks[0].coordinate
 		self.rotating_axle = None
 		self.rotating_surfaces = []
 		self.rotating_blocks = []
@@ -233,7 +242,7 @@ def rotate_camera():
 def keydown(evt):
 	global rotating_camera, cam_dx, cam_dy, cam_dz, selected_block
 	k = evt.key
-	print vars(evt)
+	#print vars(evt)
 	if evt.alt:
 		if k == 'up':
 			rotating_camera = True

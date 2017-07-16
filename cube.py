@@ -9,6 +9,15 @@ c = 0.2  # color coefficient of axles
 axle_opacity = 0.2
 d_theta = 5
 
+palette = [
+	vector(1,1,1),
+	vector(1,1,0),
+	vector(1,0,0),
+	vector(1,0.5,0),
+	vector(0,0,1),
+	vector(0,1,0),
+]
+
 class Face:
 	def __init__(self, c, rotate, sign):
 		self.color = c
@@ -49,47 +58,29 @@ class Block(sphere):
 		self.coordinate = self.coordinate.rotate(angle=angle,axis=axis)
 		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
-	#def collision(self, box):
-	#	bminx = min(box.pos[0] - box.size[0], box.pos[0] + box.size[0])
-	#	bmaxx = max(box.pos[0] - box.size[0], box.pos[0] + box.size[0])
-	#	bminy = min(box.pos[1] - box.size[1], box.pos[1] + box.size[1])
-	#	bmaxy = max(box.pos[1] - box.size[1], box.pos[1] + box.size[1])
-	#	bminz = min(box.pos[2] - box.size[2], box.pos[2] + box.size[2])
-	#	bmaxz = max(box.pos[2] - box.size[2], box.pos[2] + box.size[2])
-	#	bx = max(bminx, min(self.x, bmaxx))
-	#	by = max(bminy, min(self.y, bmaxy))
-	#	bz = max(bminz, min(self.z, bmaxz))
-
-	#	distance = sqrt( \
-	#		(bx - self.x) ** 2 + \
-	#		(by - self.y) ** 2 + \
-	#		(bz - self.z) ** 2 )
-  
-	#	return distance < self.radius
-
 class Cube:
 	def __init__(self):
 		self.clockwise = 1
 		self.centroid = box( pos=( 0, 0, 0 ), size=( 1.2*z, 1.2*z, 1.2*z ), color=( 0, 0, 0 ) )
 
 		self.faces = []
-		self.faces.append( Face( color.white,  (1,0,0), -1) )
-		self.faces.append( Face( color.yellow, (1,0,0),  1) )
-		self.faces.append( Face( color.red,    (0,1,0), -1) )
-		self.faces.append( Face( color.orange, (0,1,0),  1) )
-		self.faces.append( Face( color.blue,   (1,0,0),  0) )
-		self.faces.append( Face( color.green,  (1,0,0),  2) )
+		self.faces.append( Face( palette[0], (1,0,0), -1) )
+		self.faces.append( Face( palette[1], (1,0,0),  1) )
+		self.faces.append( Face( palette[2], (0,1,0), -1) )
+		self.faces.append( Face( palette[3], (0,1,0),  1) )
+		self.faces.append( Face( palette[4], (1,0,0),  0) )
+		self.faces.append( Face( palette[5], (1,0,0),  2) )
 
 		z2 = z * 2
 		z3 = z / 3.0
 		k = axle_pos
 		self.axles = []
-		self.axles.append( box( pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=(c, c, c) ) )
-		self.axles.append( box( pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=(c, c, 0) ) )
-		self.axles.append( box( pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=(c, 0, 0) ) )
-		self.axles.append( box( pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=(c, c/2, 0) ) )
-		self.axles.append( box( pos=(  0, 0, k ), size=( z2, z2, z3 ), color=(0, 0, c) ) )
-		self.axles.append( box( pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=(0, c, 0) ) )
+		self.axles.append( box( pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=c * palette[0] ) )
+		self.axles.append( box( pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=c * palette[1] ) )
+		self.axles.append( box( pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=c * palette[2] ) )
+		self.axles.append( box( pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=c * palette[3] ) )
+		self.axles.append( box( pos=(  0, 0, k ), size=( z2, z2, z3 ), color=c * palette[4] ) )
+		self.axles.append( box( pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=c * palette[5] ) )
 
 		self.blocks = []
 		for i in [-1, 0, 1]:
@@ -149,16 +140,11 @@ class Cube:
 					else:
 						print "attempting to add surface again"
 
-		#for face in self.faces:
-		#	for s in face.surfaces:
-		#		if collision(s, axle):
-		#			self.rotating_surfaces.append(s)
-
 		if len(self.rotating_surfaces) != 21:
 			print "wrong number of surfaces %d" % len(self.rotating_surfaces)
 		axle.opacity = 1.0
 
-		print self.rotating_blocks[0].coordinate
+		#print self.rotating_blocks[0].coordinate
 
 	def do_rotation(self):
 		if self.rotating_axle:
@@ -186,7 +172,6 @@ class Cube:
 			print
 			for surface in face.surfaces:
 				print surface.pos
-
 	
 	def select_block(self, select):
 		select %= len(self.blocks)
@@ -199,8 +184,11 @@ class Cube:
 
 		self.selected_block = select
 		self.previous_colors = []
+		avg_color = vector(0,0,0)
 		for s in self.blocks[self.selected_block].surfaces:
 			self.previous_colors.append( s.color )
+			avg_color += s.color
 			s.color = (0,1,1)
-		self.blocks[self.selected_block].color = (1,0,1)
+		avg_color /= len(self.blocks[self.selected_block].surfaces)
+		self.blocks[self.selected_block].color = avg_color
 

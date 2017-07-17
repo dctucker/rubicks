@@ -53,8 +53,16 @@ def keydown(evt):
 	elif k == ',':
 		select = cube.selected_block + len(cube.blocks) - 1
 		cube.select_block(select)
+	elif k in ('1','2','3','4','5','6','7','8','9','0'):
+		index = 9 + int(k)
+		index %= 10
+		sequence = Solver.sequences.keys()[index]
+		solver.move(sequence)
+	elif k == '*':
+		scramble()
 	elif k == '\n':
-		solver.white_cross()
+		#solver.white_cross()
+		pass
 	elif k == '/':
 		left = scene.forward.rotate(angle=radians(90), axis=scene.up)
 		directions = {
@@ -108,9 +116,9 @@ def check_queue():
 
 def scramble():
 	Cube.d_theta = 15
-	for t in range(10):
-		rnd = random.randint(0,5)
-		queue.append(['u','d','l','r','f','b'][rnd])
+	for t in range(20):
+		rnd = random.randint(0,11)
+		queue.append(['U','D','L','R','F','B','u','d','l','r','f','b'][rnd])
 
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )

@@ -1,7 +1,9 @@
 
 class Solver:
 	sequences = {
+		'rotate_top_edges': ['l','l','r','r','D','D','L','L','R','R'],
 		'flip_edge': ['r','U','f','u'],
+		'bottom_corner_up': ['r','d','R','D'],
 	}
 	def __init__(self, cube, queue):
 		self.block_queue = []
@@ -28,10 +30,10 @@ class Solver:
 			if c == top_c or c == bottom_c:
 				continue
 			block = self.locate([top_c, c])
-			self.move( block, self.sequences['flip_edge'] )
+			self.move('flip_edge', block)
 
-	def move(self, block, sequence):
-		for s in sequence:
+	def move(self, sequence, block=None):
+		for s in self.sequences[sequence]:
 			self.block_queue.insert(0, block)
 			self.queue.insert(0, s)
 			self.countdown += 1
@@ -40,6 +42,8 @@ class Solver:
 		if self.countdown > 0:
 			if self.cube.rotating_axle is None:
 				#self.white_cross()
-				self.cube.select_block( self.block_queue.pop() )
+				block = self.block_queue.pop()
+				if block:
+					self.cube.select_block( block )
 				self.countdown -= 1
 

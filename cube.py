@@ -63,7 +63,7 @@ class Cube:
 	d_theta = 5
 
 	def __init__(self):
-		axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
+		self.axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
 
 		self.clockwise = 1
 		self.centroid = sphere( pos=( 0, 0, 0 ), radius=z-g, color=( 0, 0, 0 ) )

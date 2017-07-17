@@ -6,9 +6,8 @@ from solver import *
 
 rotating_camera = False
 camera_time = 0
-cam_dx = 0
-cam_dy = 0
-cam_dz = 0
+cam_d_theta = 0
+cam_axis = (0,0,0)
 
 def rotate_camera():
 	global rotating_camera, camera_time, cam_dx, cam_dy, cam_dz
@@ -16,7 +15,6 @@ def rotate_camera():
 		cx = scene.forward[0]
 		cy = scene.forward[1]
 		cz = scene.forward[2]
-		scene.forward = ( cx + cam_dx, cy + cam_dy, cz + cam_dz )
 		camera_time += d_theta
 		if camera_time >= 90:
 			camera_time = 0
@@ -26,72 +24,87 @@ def rotate_camera():
 			rotating_camera = False
 
 def keydown(evt):
-	global rotating_camera, cam_dx, cam_dy, cam_dz, selected_block
+	global rotating_camera, cam_axis, selected_block
 	k = evt.key
 	#print vars(evt)
-	if evt.alt:
-		if k == 'up':
-			rotating_camera = True
-			cam_dy = radians(5)
-		elif k == 'down':
-			rotating_camera = True
-			cam_dy = -radians(5)
-		if k == 'left':
-			rotating_camera = True
-			cam_dx = radians(5)
-		elif k == 'right':
-			rotating_camera = True
-			cam_dx = -radians(5)
-		return
-	if evt.shift:
-		if k == 'up':
-			cube.rotate('R')
-		elif k == 'down':
-			cube.rotate('r')
-		elif k == 'right':
-			cube.rotate('D')
-		elif k == 'left':
-			cube.rotate('d')
-	else:
-		if k == 'esc':
-			exit()
-		elif k == 'left':
-			cube.rotate('U')
-		elif k == 'right':
-			cube.rotate('u')
-		elif k == 'down':
-			cube.rotate('L')
-		elif k == 'up':
-			cube.rotate('l')
-		elif k == 'home':
-			cube.rotate('f')
-		elif k == 'end':
-			cube.rotate('F')
-		elif k == 'page up':
-			cube.rotate('b')
-		elif k == 'page down':
-			cube.rotate('B')
-		elif k in ('1','2','3','4','5','6','7','8','9','0'):
-			block = cube.blocks[int(k)]
-			block.color = (1,0,1)
-			for s in block.surfaces:
-				print s.pos
-		elif k == '.':
-			select = cube.selected_block + 1
-			cube.select_block(select)
-		elif k == ',':
-			select = cube.selected_block + len(cube.blocks) - 1
-			cube.select_block(select)
-		elif k == '\n':
-			solver.white_cross()
+	if k in ('esc','Q','q'):
+		exit()
+	if k.upper() in ('R','L','U','D','B','F'):
+		push(k)
+	if k == 'left':
+		axis = scene.up
+		scene.forward = scene.forward.rotate( angle=radians(-5), axis=axis )
+		#scene.up = scene.up.rotate( angle=radians(-5), axis=axis )
+	elif k == 'right':
+		axis = scene.up
+		scene.forward = scene.forward.rotate( angle=radians( 5), axis=axis )
+		#scene.up = scene.up.rotate( angle=radians( 5), axis=axis )
+	elif k == 'down':
+		axis = (0,0,1)
+		scene.forward = scene.forward.rotate( angle=radians(-5), axis=axis )
+		scene.up = scene.up.rotate( angle=radians(-5), axis=axis )
+	elif k == 'up':
+		axis = (0,0,1)
+		scene.forward = scene.forward.rotate( angle=radians( 5), axis=axis )
+		scene.up = scene.up.rotate( angle=radians( 5), axis=axis )
+	elif k == '.':
+		select = cube.selected_block + 1
+		cube.select_block(select)
+	elif k == ',':
+		select = cube.selected_block + len(cube.blocks) - 1
+		cube.select_block(select)
+	elif k == '\n':
+		solver.white_cross()
+	elif k == '/':
+		left = scene.forward.rotate(angle=radians(90), axis=scene.up)
+		directions = {
+			'U': -scene.up,
+			'D':  scene.up,
+			'L': -left,
+			'R':  left,
+			'B': -scene.forward,
+			'F':  scene.forward,
+		}
+		closest = {
+			'U': 0,
+			'D': 0,
+			'L': 0,
+			'R': 0,
+			'B': 0,
+			'F': 0,
+		}
+		for d,pos in directions.items():
+			for a in range(len(cube.axles)):
+				if mag(pos - cube.axles[closest[d]].pos) < mag(pos - cube.axles[a].pos):
+					closest[d] = a
+		cube.axlemap = closest
+		#print closest
+
+
+def identify_closest():
+	pass
+
+def push(item):
+	queue.insert(0, item)
+	update_queue()
+
+def update_queue():
+	text = ""
+	for item in queue:
+		text = item + " "+ text
+	queue_label.text = "Q: " + text
 
 def check_queue():
+	text = ""
 	if len(queue) > 0:
 		if cube.rotating_axle is None:
+			update_queue()
 			rot = queue.pop()
 			cube.rotate(rot)
 	else:
 		Cube.d_theta = Cube.normal_d_theta
+		if cube.rotating_axle is None:
+			update_queue()
 
 def scramble():
 	Cube.d_theta = 15
@@ -104,6 +117,8 @@ scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(
 scene.fov = radians(30)
 scene.forward = (0.5, -0.5, -1)
 scene.bind('keydown', keydown)
+queue_label = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
+forward_label = label( title="", pos=(0, 1.0, 0), xoffset=1, box=False )
 
 queue = []
 cube = Cube()
@@ -111,16 +126,10 @@ solver = Solver(cube, queue)
 #scramble()
 #cube.print_positions()
 
-#print cube.blocks[0].pos
-#print cube.faces[1].surfaces[0].pos
-#print cube.faces[2].surfaces[0].pos
-#print cube.faces[5].surfaces[6].pos
-#for s in cube.blocks[0].surfaces:
-#	s.color = (0,1,1)
-
 while 1:
 	rate(60)
 	check_queue()
 	cube.do_rotation()
 	rotate_camera()
 	solver.tick()
+	forward_label.text = str(scene.forward)

@@ -63,6 +63,8 @@ class Cube:
 	d_theta = 5
 
 	def __init__(self):
+		axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
+
 		self.clockwise = 1
 		self.centroid = sphere( pos=( 0, 0, 0 ), radius=z-g, color=( 0, 0, 0 ) )
 
@@ -114,7 +116,6 @@ class Cube:
 						block.surfaces.append(surface)
 
 	def rotate(self, d):
-		axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
 
 		if self.rotating_axle is not None or self.rotating_time != 0:
 			return
@@ -126,7 +127,7 @@ class Cube:
 			self.clockwise = -1;
 		else:
 			self.clockwise =  1
-		axle_index = self.axles[ axlemap[ d.upper() ] ]
+		axle_index = self.axles[ self.axlemap[ d.upper() ] ]
 		self.start_rotation( axle_index )
 
 	def start_rotation(self, axle):
@@ -175,7 +176,7 @@ class Cube:
 			print
 			for surface in face.surfaces:
 				print surface.pos
-	
+
 	def select_block(self, select):
 		select %= len(self.blocks)
 		block = self.blocks[self.selected_block]

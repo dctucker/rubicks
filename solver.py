@@ -32,8 +32,8 @@ class Solver:
 
 	def move(self, block, sequence):
 		for s in sequence:
-			self.block_queue.append(block)
-			self.queue.append(s)
+			self.block_queue.insert(0, block)
+			self.queue.insert(0, s)
 			self.countdown += 1
 	
 	def tick(self):

@@ -26,6 +26,11 @@ class Solver:
 			'efgh_clockwise',
 			'efgh_counter',
 		],
+		'centers':[
+			'center_90',
+			'center_180',
+			'center_270',
+		],
 	}
 	sequences = {
 		'rotate_top_edges':  ['l','l','r','r','D','D','L','L','R','R'],
@@ -40,6 +45,13 @@ class Solver:
 		'swap_corners':      ['r','F','r','B','B','R','f','r','B','B','R','R','u'],
 		'efgh_clockwise':    ['F','F','U','L','r','F','F','l','R','U','F','F'],
 		'efgh_counter':      ['F','F','u','L','r','F','F','l','R','u','F','F'],
+		# requires V,v,H,h moves
+		'center_90':         ['v','h','V','U','v','H','V','u'],
+		'center_180':        ['U','R','L','U','U','r','l','U','R','L','U','U','r','l'],
+		'center_270':        ['U','v','h','V','u','v','H','V'],
+		# non-solid pattern solutions
+		'multi_cross':       ['R','R','L','L','U','U','D','D','F','F','B','B'],
+		'middle_square':     ['R','l','U','d','f','B','R','l'],
 	}
 	def __init__(self, cube, queue):
 		self.block_queue = []
@@ -56,13 +68,22 @@ class Solver:
 			if c0 == c1:
 				return self.cube.blocks.index(block)
 
-	def white_cross(self):
+	def orient_front(self, c):
+		cube.orient( cube.axles[c].pos )
+
+	def orient_top(self, c):
+		cube.orient( None, cube.axles[c].pos )
+
+	def north_cross(self):
 		top_c = 0
 		if top_c % 2 == 0:
 			bottom_c = top_c + 1
 		else:
 			bottom_c = top_c - 1
+
+		self.orient_top(top_c)
 		for c in range(0,5):
+			self.orient_front(c)
 			if c == top_c or c == bottom_c:
 				continue
 			block = self.locate([top_c, c])

@@ -64,30 +64,7 @@ def keydown(evt):
 		#solver.white_cross()
 		pass
 	elif k == '/':
-		left = scene.forward.rotate(angle=radians(90), axis=scene.up)
-		directions = {
-			'U': -scene.up,
-			'D':  scene.up,
-			'L': -left,
-			'R':  left,
-			'B': -scene.forward,
-			'F':  scene.forward,
-		}
-		closest = {
-			'U': 0,
-			'D': 0,
-			'L': 0,
-			'R': 0,
-			'B': 0,
-			'F': 0,
-		}
-		for d,pos in directions.items():
-			for a in range(len(cube.axles)):
-				if mag(pos - cube.axles[closest[d]].pos) < mag(pos - cube.axles[a].pos):
-					closest[d] = a
-		cube.axlemap = closest
-		#print closest
-
+		cube.orient(scene.forward, scene.up)
 
 def identify_closest():
 	pass

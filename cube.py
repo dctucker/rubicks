@@ -63,7 +63,7 @@ class Cube:
 	d_theta = 5
 
 	def __init__(self):
-		self.axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
+		self.orient()
 
 		self.clockwise = 1
 		self.centroid = sphere( pos=( 0, 0, 0 ), radius=z-g, color=( 0, 0, 0 ) )
@@ -107,6 +107,36 @@ class Cube:
 		self.selected_block = len(self.blocks) - 1
 		self.previous_colors = []
 
+	def orient(self, front=None, up=None):
+		if front is None and up is None:
+			self.axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
+			return
+		if front is None:
+			front = self.axes[ self.axlemap['F'] ].pos
+		left = front.rotate(angle=radians(90), axis=up)
+		if up is None:
+			up = self.axes[ self.axlemap['U'] ].pos
+		directions = {
+			'U': -up,
+			'D':  up,
+			'L': -left,
+			'R':  left,
+			'B': -front,
+			'F':  front,
+		}
+		closest = {
+			'U': 0,
+			'D': 0,
+			'L': 0,
+			'R': 0,
+			'B': 0,
+			'F': 0,
+		}
+		for d,pos in directions.items():
+			for a in range(len(self.axles)):
+				if mag(pos - self.axles[closest[d]].pos) < mag(pos - self.axles[a].pos):
+					closest[d] = a
+		self.axlemap = closest
 
 	def load_surfaces_into_blocks(self):
 		for block in self.blocks:

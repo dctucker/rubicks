@@ -204,8 +204,15 @@ class Cube:
 			axle.opacity = axle_opacity
 
 	def select_block(self, select):
+		if isinstance(select, tuple) or isinstance(select, vector):
+			for b in range(len(self.blocks)):
+				if self.blocks[b].coordinate == select:
+					select = b
+					break
+			if not isinstance(select, int):
+				return
 		select %= len(self.blocks)
-		block = self.blocks[self.selected_block]
+		block = self.blocks[ self.selected_block ]
 		if len(self.previous_colors) == len(block.surfaces):
 			n = 0
 			block.color = (1,1,1)

@@ -9,9 +9,8 @@ camera_d_theta_y = 0
 
 def rotate_camera():
 	global camera_d_theta_x, camera_d_theta_y
-	scene.forward = scene.forward.rotate( angle=camera_d_theta_x, axis=scene.up )
-	#scene.forward.y += camera_d_theta_y
-	scene.up = scene.up.rotate( angle=camera_d_theta_y, axis=scene.forward ) #.rotate(angle=radians(180),axis=(0,0,1)) )
+	cube.frame.rotate( angle=camera_d_theta_x, axis=(0,1,0) )
+	cube.frame.rotate( angle=camera_d_theta_y, axis=(1,0,0) )
 
 def keydown(evt):
 	global camera_d_theta_x, camera_d_theta_y
@@ -46,7 +45,8 @@ def keydown(evt):
 		#solver.white_cross()
 		pass
 	elif k == '/':
-		cube.orient(scene.forward, scene.up)
+		f = cube.frame
+		cube.orient(f.world_to_frame(scene.forward), f.world_to_frame(scene.up))
 
 def keyup(evt):
 	global camera_d_theta_x, camera_d_theta_y
@@ -60,9 +60,6 @@ def keyup(evt):
 		camera_d_theta_y = 0
 	elif k == 'up':
 		camera_d_theta_y = 0
-
-def identify_closest():
-	pass
 
 def push(item):
 	queue.insert(0, item)
@@ -93,20 +90,16 @@ def scramble():
 		queue.append(['U','D','L','R','F','B','u','d','l','r','f','b'][rnd])
 
 
-scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )
+scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, background=(0.2,0.2,0.3) )
 scene.bind('keydown', keydown)
 scene.bind('keyup', keyup)
 scene.fov = radians(30)
-scene.forward = (0.5, -0.5, -1)
-queue_label = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
-forward_label = label( title="", pos=(0, 1.0, 0), xoffset=1, box=False )
-up_label = label( title="", pos=(1, 1.0, 0), xoffset=1, box=False )
+queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
+forward_label = label( title=""   , pos=(0, 1.0, 0), xoffset=1, box=False )
 
 queue = []
 cube = Cube()
 solver = Solver(cube, queue)
-#scramble()
-#cube.print_positions()
 
 while 1:
 	rate(60)
@@ -114,5 +107,4 @@ while 1:
 	cube.do_rotation()
 	rotate_camera()
 	solver.tick()
-	forward_label.text = str(scene.forward)
-	up_label.text = str(scene.up)
+	forward_label.text = str(cube.frame.axis)

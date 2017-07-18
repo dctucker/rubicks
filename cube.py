@@ -1,19 +1,19 @@
 from visual import *
 
-g = 0.05 # box thinness
-w = 0.45 # size of surfaces
-z = 0.75 # z distance of surfaces
-d = 0.5  # x/y distance of surfaces
+face_g = 0.05 # box thinness
+face_w = 0.45 # size of surfaces
+face_z = 0.75 # z distance of surfaces
+face_d = 0.5  # x/y distance of surfaces
 axle_pos = 0.60 # position of axles
-c = 0.2  # color coefficient of axles
 axle_opacity = 0.0
+axle_shade = 0.2  # color coefficient of axles
 
 class Face:
-	def __init__(self, c, rotate, sign):
+	def __init__(self, cube, c, rotate, sign):
 		self.color = c
 		self.surfaces = []
 		self.labels = []
-		size = (w,w,g)
+		size = (face_w,face_w,face_g)
 		if sign == 0:
 			normal = 3
 		elif sign == 2:
@@ -22,7 +22,7 @@ class Face:
 			normal = rotate[0] * sign + 2 * rotate[1] * sign
 		for i in [-1, 0, 1]:
 			for j in [-1, 0, 1]:
-				surface = box( pos=(j*d, i*d, z), size=size, color=c )
+				surface = box( frame=cube.frame, pos=(j*face_d, i*face_d, face_z), size=size, color=c )
 				surface.rotate( angle = sign * pi / 2.0, axis = rotate, origin = (0,0,0) )
 				surface.opacity = 0.75
 				surface.coordinate = (normal, i, j)
@@ -31,10 +31,10 @@ class Face:
 				#lab = label( pos=surface.pos, text="%d,%d,%d" % (normal,i,j) )
 
 class Block(sphere):
-	def __init__(self, px,py,pz):
+	def __init__(self, cube, px,py,pz):
 		self.expected_coordinate = vector(px, py, pz)
 		self.coordinate = vector(px, py, pz)
-		sphere.__init__(self, pos=(px*z, py*z, pz*z), radius=w*0.3 )
+		sphere.__init__(self, frame=cube.frame, pos=(px*face_z, py*face_z, pz*face_z), radius=face_w*0.3 )
 		self.opacity = 0.0
 		self.material = materials.shiny
 		self.surfaces = []
@@ -63,29 +63,31 @@ class Cube:
 	d_theta = 5
 
 	def __init__(self):
+		self.frame = frame()
+
 		self.orient()
 
 		self.clockwise = 1
-		self.centroid = sphere( pos=( 0, 0, 0 ), radius=z-g, color=( 0, 0, 0 ) )
+		self.centroid = sphere( frame=self.frame, pos=( 0, 0, 0 ), radius=face_z-face_g, color=( 0, 0, 0 ) )
 
 		self.faces = []
-		self.faces.append( Face( self.palette[0], (1,0,0), -1) )
-		self.faces.append( Face( self.palette[1], (1,0,0),  1) )
-		self.faces.append( Face( self.palette[2], (0,1,0), -1) )
-		self.faces.append( Face( self.palette[3], (0,1,0),  1) )
-		self.faces.append( Face( self.palette[4], (1,0,0),  0) )
-		self.faces.append( Face( self.palette[5], (1,0,0),  2) )
+		self.faces.append( Face( self, self.palette[0], (1,0,0), -1) )
+		self.faces.append( Face( self, self.palette[1], (1,0,0),  1) )
+		self.faces.append( Face( self, self.palette[2], (0,1,0), -1) )
+		self.faces.append( Face( self, self.palette[3], (0,1,0),  1) )
+		self.faces.append( Face( self, self.palette[4], (1,0,0),  0) )
+		self.faces.append( Face( self, self.palette[5], (1,0,0),  2) )
 
-		z2 = z * 2
-		z3 = z / 3.0
+		z2 = face_z * 2
+		z3 = face_z / 3.0
 		k = axle_pos
 		self.axles = []
-		self.axles.append( box( pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=c * self.palette[0] ) )
-		self.axles.append( box( pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=c * self.palette[1] ) )
-		self.axles.append( box( pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=c * self.palette[2] ) )
-		self.axles.append( box( pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=c * self.palette[3] ) )
-		self.axles.append( box( pos=(  0, 0, k ), size=( z2, z2, z3 ), color=c * self.palette[4] ) )
-		self.axles.append( box( pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=c * self.palette[5] ) )
+		self.axles.append( box( frame=self.frame, pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[0] ) )
+		self.axles.append( box( frame=self.frame, pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[1] ) )
+		self.axles.append( box( frame=self.frame, pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[2] ) )
+		self.axles.append( box( frame=self.frame, pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[3] ) )
+		self.axles.append( box( frame=self.frame, pos=(  0, 0, k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[4] ) )
+		self.axles.append( box( frame=self.frame, pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[5] ) )
 
 		self.blocks = []
 		for i in [-1, 0, 1]:
@@ -93,7 +95,7 @@ class Cube:
 				for k in [-1, 0, 1]:
 					if i == 0 and j == 0 and k == 0:
 						continue
-					self.blocks.append( Block( i, j, k ) )
+					self.blocks.append( Block( self, i, j, k ) )
 
 		self.rotating_time = 0
 		self.rotating_surfaces = []
@@ -200,12 +202,6 @@ class Cube:
 		self.rotating_time = 0
 		for axle in self.axles:
 			axle.opacity = axle_opacity
-
-	def print_positions(self):
-		for face in self.faces:
-			print
-			for surface in face.surfaces:
-				print surface.pos
 
 	def select_block(self, select):
 		select %= len(self.blocks)

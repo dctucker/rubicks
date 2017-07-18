@@ -34,6 +34,7 @@ def keydown(evt):
 		if coord.x > 1:
 			coord.x = -1
 		cube.select_block(coord)
+		print cube.blocks[ cube.selected_block ].pos
 	elif k == ',':
 		coord = cube.blocks[ cube.selected_block ].coordinate
 		coord = vector( coord.x - 1, coord.y, coord.z )
@@ -77,6 +78,10 @@ def keydown(evt):
 	elif k == '/':
 		f = cube.frame
 		cube.orient(f.world_to_frame(scene.forward), f.world_to_frame(scene.up))
+	elif k == '`':
+		block_pos = cube.blocks[ cube.selected_block ].pos
+		block_pos = cube.frame.frame_to_world( block_pos )
+		cube.frame.rotate( angle=cube.frame.axis.diff_angle(block_pos), axis=cross(cube.frame.up, block_pos) )
 
 def keyup(evt):
 	global camera_d_theta_x, camera_d_theta_y

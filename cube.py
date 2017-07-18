@@ -210,7 +210,7 @@ class Cube:
 					select = b
 					break
 			if not isinstance(select, int):
-				return
+				select = 0
 		select %= len(self.blocks)
 		block = self.blocks[ self.selected_block ]
 		if len(self.previous_colors) == len(block.surfaces):

@@ -4,27 +4,17 @@ from visual import *
 from cube import *
 from solver import *
 
-rotating_camera = False
-camera_time = 0
-cam_d_theta = 0
-cam_axis = (0,0,0)
+camera_d_theta_x = 0
+camera_d_theta_y = 0
 
 def rotate_camera():
-	global rotating_camera, camera_time, cam_dx, cam_dy, cam_dz
-	if rotating_camera:
-		cx = scene.forward[0]
-		cy = scene.forward[1]
-		cz = scene.forward[2]
-		camera_time += d_theta
-		if camera_time >= 90:
-			camera_time = 0
-			cam_dx = 0
-			cam_dy = 0
-			cam_dz = 0
-			rotating_camera = False
+	global camera_d_theta_x, camera_d_theta_y
+	scene.forward = scene.forward.rotate( angle=camera_d_theta_x, axis=scene.up )
+	#scene.forward.y += camera_d_theta_y
+	scene.up = scene.up.rotate( angle=camera_d_theta_y, axis=scene.forward ) #.rotate(angle=radians(180),axis=(0,0,1)) )
 
 def keydown(evt):
-	global rotating_camera, cam_axis, selected_block
+	global camera_d_theta_x, camera_d_theta_y
 	k = evt.key
 	#print vars(evt)
 	if k in ('esc','Q','q'):
@@ -32,21 +22,13 @@ def keydown(evt):
 	if k.upper() in ('R','L','U','D','B','F'):
 		push(k)
 	if k == 'left':
-		axis = scene.up
-		scene.forward = scene.forward.rotate( angle=radians(-5), axis=axis )
-		#scene.up = scene.up.rotate( angle=radians(-5), axis=axis )
+		camera_d_theta_x = radians(-2)
 	elif k == 'right':
-		axis = scene.up
-		scene.forward = scene.forward.rotate( angle=radians( 5), axis=axis )
-		#scene.up = scene.up.rotate( angle=radians( 5), axis=axis )
+		camera_d_theta_x = radians(2)
 	elif k == 'down':
-		axis = (0,0,1)
-		scene.forward = scene.forward.rotate( angle=radians(-5), axis=axis )
-		scene.up = scene.up.rotate( angle=radians(-5), axis=axis )
+		camera_d_theta_y = radians(-2)
 	elif k == 'up':
-		axis = (0,0,1)
-		scene.forward = scene.forward.rotate( angle=radians( 5), axis=axis )
-		scene.up = scene.up.rotate( angle=radians( 5), axis=axis )
+		camera_d_theta_y = radians(2)
 	elif k == '.':
 		select = cube.selected_block + 1
 		cube.select_block(select)
@@ -65,6 +47,19 @@ def keydown(evt):
 		pass
 	elif k == '/':
 		cube.orient(scene.forward, scene.up)
+
+def keyup(evt):
+	global camera_d_theta_x, camera_d_theta_y
+	k = evt.key
+	#print vars(evt)
+	if k == 'left':
+		camera_d_theta_x = 0
+	elif k == 'right':
+		camera_d_theta_x = 0
+	elif k == 'down':
+		camera_d_theta_y = 0
+	elif k == 'up':
+		camera_d_theta_y = 0
 
 def identify_closest():
 	pass
@@ -99,11 +94,13 @@ def scramble():
 
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, scale=(0.5,0.5,0.5), background=(0.2,0.2,0.3) )
+scene.bind('keydown', keydown)
+scene.bind('keyup', keyup)
 scene.fov = radians(30)
 scene.forward = (0.5, -0.5, -1)
-scene.bind('keydown', keydown)
 queue_label = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
 forward_label = label( title="", pos=(0, 1.0, 0), xoffset=1, box=False )
+up_label = label( title="", pos=(1, 1.0, 0), xoffset=1, box=False )
 
 queue = []
 cube = Cube()
@@ -118,3 +115,4 @@ while 1:
 	rotate_camera()
 	solver.tick()
 	forward_label.text = str(scene.forward)
+	up_label.text = str(scene.up)

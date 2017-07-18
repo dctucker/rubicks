@@ -80,8 +80,20 @@ def keydown(evt):
 		cube.orient(f.world_to_frame(scene.forward), f.world_to_frame(scene.up))
 	elif k == '`':
 		block_pos = cube.blocks[ cube.selected_block ].pos
-		block_pos = cube.frame.frame_to_world( block_pos )
-		cube.frame.rotate( angle=cube.frame.axis.diff_angle(block_pos), axis=cross(cube.frame.up, block_pos) )
+		#block_pos = cube.frame.frame_to_world( block_pos )
+		print block_pos
+
+		#block_pos.z = -block_pos.z
+		#fwd = vector(scene.forward)
+		#f
+
+		#fwd = vector(0,0,-1)
+		#angle = fwd.diff_angle( block_pos )
+		#cube.frame.rotate( angle=angle, axis=(1,0,0) )
+
+		#block_pos = block_pos.rotate(angle=radians(90), axis=(1,0,0))
+		#cube.frame.axis = norm( block_pos )
+		##cube.frame.rotate( angle=cube.frame.axis.diff_angle(block_pos), axis=cross(cube.frame.up, block_pos) )
 
 def keyup(evt):
 	global camera_d_theta_x, camera_d_theta_y
@@ -141,4 +153,5 @@ while 1:
 	cube.do_rotation()
 	rotate_camera()
 	solver.tick()
-	forward_label.text = str(cube.frame.axis)
+	forward_label.text = str( norm( cube.frame.frame_to_world( cube.blocks[ cube.selected_block ].pos ) ) )
+	#cube.frame.axis

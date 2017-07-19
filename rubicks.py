@@ -87,7 +87,14 @@ def keydown(evt):
 		#fwd = vector(scene.forward)
 		#f
 
-		#fwd = vector(0,0,-1)
+		fwd = vector(0,0,1)
+		dx = fwd.x - block_pos.x
+		dy = fwd.y - block_pos.y
+		dz = fwd.z - block_pos.z
+		altitude = atan2(dy, sqrt(dx*dx + dz*dz))
+		azimuth  = atan2( -dx, -dz )
+		projection = atan2(fwd.z, fwd.y) - atan2(block_pos.z, block_pos.y)
+		print altitude, azimuth, projection
 		#angle = fwd.diff_angle( block_pos )
 		#cube.frame.rotate( angle=angle, axis=(1,0,0) )
 
@@ -143,9 +150,13 @@ scene.bind('keyup'  , keyup)
 queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
 forward_label = label( title=""   , pos=(0, 1.0, 0), xoffset=1, box=False )
 
+
 queue = []
 cube = Cube()
 solver = Solver(cube, queue)
+
+pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
+
 
 while 1:
 	rate(60)
@@ -154,4 +165,5 @@ while 1:
 	rotate_camera()
 	solver.tick()
 	forward_label.text = str( norm( cube.frame.frame_to_world( cube.blocks[ cube.selected_block ].pos ) ) )
+	pointer.axis = cube.frame.axis
 	#cube.frame.axis

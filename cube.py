@@ -63,7 +63,7 @@ class Cube:
 	d_theta = 5
 
 	def __init__(self):
-		self.frame = frame()
+		self.frame = frame( axis=(0,0,-1) )
 
 		self.orient()
 

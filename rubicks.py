@@ -6,16 +6,22 @@ from solver import *
 
 camera_d_theta_x = 0
 camera_d_theta_y = 0
+camera_d_theta_z = 0
 
 def rotate_camera():
-	global camera_d_theta_x, camera_d_theta_y
+	global camera_d_theta_x, camera_d_theta_y, camera_d_theta_z
 	cube.frame.rotate( angle=camera_d_theta_x, axis=(0,1,0) )
 	cube.frame.rotate( angle=camera_d_theta_y, axis=(1,0,0) )
+	cube.frame.rotate( angle=camera_d_theta_z, axis=(0,0,1) )
+	if camera_d_theta_x == 0 and camera_d_theta_y == 0:
+		if abs(cube.frame.axis.x * cube.frame.axis.y * cube.frame.axis.z) > radians(1):
+			camera_d_theta_z = radians(1)
+		else:
+			camera_d_theta_z = 0
 
 def keydown(evt):
-	global camera_d_theta_x, camera_d_theta_y
+	global camera_d_theta_x, camera_d_theta_y, camera_d_theta_z
 	k = evt.key
-	#print vars(evt)
 	if k in ('esc','Q','q'):
 		exit()
 	if k.upper() in ('R','L','U','D','B','F'):
@@ -28,6 +34,10 @@ def keydown(evt):
 		camera_d_theta_y = radians(-2)
 	elif k == 'up':
 		camera_d_theta_y = radians(2)
+	elif k == 'page up':
+		camera_d_theta_z = radians(-2)
+	elif k == 'page down':
+		camera_d_theta_z = radians(2)
 	elif k == '.':
 		coord = cube.blocks[ cube.selected_block ].coordinate
 		coord = vector( coord.x + 1, coord.y, coord.z )
@@ -79,7 +89,7 @@ def keydown(evt):
 		f = cube.frame
 		cube.orient(f.world_to_frame(scene.forward), f.world_to_frame(scene.up))
 	elif k == '`':
-		block_pos = cube.blocks[ cube.selected_block ].pos
+		block_pos = norm( cube.blocks[ cube.selected_block ].pos )
 		#block_pos = cube.frame.frame_to_world( block_pos )
 		print block_pos
 
@@ -87,7 +97,7 @@ def keydown(evt):
 		#fwd = vector(scene.forward)
 		#f
 
-		fwd = vector(0,0,1)
+		fwd = vector(0,0,-1)
 		dx = fwd.x - block_pos.x
 		dy = fwd.y - block_pos.y
 		dz = fwd.z - block_pos.z
@@ -101,9 +111,15 @@ def keydown(evt):
 		#block_pos = block_pos.rotate(angle=radians(90), axis=(1,0,0))
 		#cube.frame.axis = norm( block_pos )
 		##cube.frame.rotate( angle=cube.frame.axis.diff_angle(block_pos), axis=cross(cube.frame.up, block_pos) )
+	elif k == '\\':
+		angle = -diff_angle( scene.forward, cube.frame.axis )
+		axis = scene.forward.cross( cube.frame.axis )
+		cube.frame.rotate( angle=angle, axis=axis )
+	else:
+		print vars(evt)
 
 def keyup(evt):
-	global camera_d_theta_x, camera_d_theta_y
+	global camera_d_theta_x, camera_d_theta_y, camera_d_theta_z
 	k = evt.key
 	#print vars(evt)
 	if k == 'left':
@@ -114,6 +130,10 @@ def keyup(evt):
 		camera_d_theta_y = 0
 	elif k == 'up':
 		camera_d_theta_y = 0
+	elif k == 'page up':
+		camera_d_theta_z = 0
+	elif k == 'page down':
+		camera_d_theta_z = 0
 
 def push(item):
 	queue.insert(0, item)
@@ -164,6 +184,9 @@ while 1:
 	cube.do_rotation()
 	rotate_camera()
 	solver.tick()
-	forward_label.text = str( norm( cube.frame.frame_to_world( cube.blocks[ cube.selected_block ].pos ) ) )
+	#forward_label.text = str( norm( cube.frame.frame_to_world( cube.blocks[ cube.selected_block ].pos ) ) )
+	forward_label.text = str( norm( cube.frame.axis ) )
+	#forward_label.text = str( degrees( diff_angle( scene.forward, cube.frame.axis ) ) )
+	#forward_label.text = str( scene.forward.cross( cube.frame.axis ) )
 	pointer.axis = cube.frame.axis
 	#cube.frame.axis

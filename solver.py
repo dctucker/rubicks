@@ -1,3 +1,4 @@
+import random
 
 class Solver:
 	stages = {
@@ -103,4 +104,10 @@ class Solver:
 				if block:
 					self.cube.select_block( block )
 				self.countdown -= 1
+
+	def scramble(self):
+		self.cube.d_theta = 15
+		for t in range(20):
+			rnd = random.randint(0,11)
+			self.queue.append(['U','D','L','R','F','B','u','d','l','r','f','b'][rnd])
 

@@ -1,5 +1,6 @@
 from visual import *
 
+epsilon = 0.0000001
 face_g = 0.05 # box thinness
 face_w = 0.45 # size of surfaces
 face_z = 0.75 # z distance of surfaces
@@ -47,6 +48,9 @@ class Block(sphere):
 	
 	def rotate(self, angle, axis, origin):
 		self.coordinate = self.coordinate.rotate(angle=angle,axis=axis)
+		for i in range(len(self.coordinate)):
+			if abs(self.coordinate[i]) < epsilon:
+				self.coordinate[i] = 0
 		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
 class Cube:
@@ -60,9 +64,9 @@ class Cube:
 	]
 
 	normal_d_theta = 5
-	d_theta = 5
 
 	def __init__(self):
+		self.d_theta = Cube.normal_d_theta
 		self.frame = frame( axis=(0,0,-1) )
 
 		self.orient()
@@ -185,17 +189,18 @@ class Cube:
 	def do_rotation(self):
 		if self.rotating_axle:
 			axle = self.rotating_axle
-			axle.rotate(angle=radians(-Cube.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
+			axle.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			for s in self.rotating_surfaces:
-				s.rotate(angle=radians(-Cube.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
+				s.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			for b in self.rotating_blocks:
-				b.rotate(angle=radians(-Cube.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
-			self.rotating_time += Cube.d_theta
+				b.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
+			self.rotating_time += self.d_theta
 			if self.rotating_time >= 90:
 				self.stop_rotation()
 
 	def stop_rotation(self):
 		#print self.rotating_blocks[0].coordinate
+		#print self.blocks[ self.selected_block ].coordinate
 		self.rotating_axle = None
 		self.rotating_surfaces = []
 		self.rotating_blocks = []
@@ -206,11 +211,13 @@ class Cube:
 	def select_block(self, select):
 		if isinstance(select, tuple) or isinstance(select, vector):
 			for b in range(len(self.blocks)):
-				if self.blocks[b].coordinate == select:
+				#print self.blocks[b].coordinate
+				if mag(self.blocks[b].coordinate - select) < epsilon:
 					select = b
 					break
 			if not isinstance(select, int):
-				select = 0
+				print "invalid selection ", select
+				return
 		select %= len(self.blocks)
 		block = self.blocks[ self.selected_block ]
 		if len(self.previous_colors) == len(block.surfaces):

@@ -24,9 +24,9 @@ def keydown(evt):
 	k = evt.key
 	if k in ('esc','Q','q'):
 		exit()
-	if k.upper() in ('R','L','U','D','B','F'):
+	elif k.upper() in ('R','L','U','D','B','F'):
 		push(k)
-	if k == 'left':
+	elif k == 'left':
 		camera_d_theta_x = radians(-2)
 	elif k == 'right':
 		camera_d_theta_x = radians(2)
@@ -114,6 +114,13 @@ def keydown(evt):
 	elif k == '\\':
 		angle = -diff_angle( scene.forward, cube.frame.axis )
 		axis = scene.forward.cross( cube.frame.axis )
+		cube.frame.rotate( angle=angle, axis=axis )
+
+		sel_pos = cube.frame.frame_to_world( cube.blocks[ cube.selected_block ].pos )
+		sel_pos = norm(sel_pos)
+		n = -scene.forward
+		angle = -diff_angle( n, sel_pos )
+		axis = n.cross( sel_pos )
 		cube.frame.rotate( angle=angle, axis=axis )
 	else:
 		print vars(evt)

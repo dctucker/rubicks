@@ -186,6 +186,9 @@ class Cube:
 
 		#print self.rotating_blocks[0].coordinate
 
+	def tick(self):
+		self.do_rotation()
+
 	def do_rotation(self):
 		if self.rotating_axle:
 			axle = self.rotating_axle

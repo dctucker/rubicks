@@ -1,4 +1,5 @@
 import random
+from cube import *
 
 class Solver:
 	stages = {
@@ -54,11 +55,11 @@ class Solver:
 		'multi_cross':       ['R','R','L','L','U','U','D','D','F','F','B','B'],
 		'middle_square':     ['R','l','U','d','f','B','R','l'],
 	}
-	def __init__(self, cube, queue):
+	def __init__(self, cube):
 		self.block_queue = []
-		self.cube = cube
-		self.queue = queue
+		self.queue = []
 		self.countdown = 0
+		self.cube = cube
 
 	def locate(self, colors):
 		c0 = set([self.cube.palette[x].astuple() for x in colors])
@@ -97,6 +98,7 @@ class Solver:
 			self.countdown += 1
 	
 	def tick(self):
+		self.check_queue()
 		if self.countdown > 0:
 			if self.cube.rotating_axle is None:
 				#self.white_cross()
@@ -110,4 +112,12 @@ class Solver:
 		for t in range(20):
 			rnd = random.randint(0,11)
 			self.queue.append(['U','D','L','R','F','B','u','d','l','r','f','b'][rnd])
+
+	def check_queue(self):
+		if len(self.queue) > 0:
+			if self.cube.rotating_axle is None:
+				rot = self.queue.pop()
+				self.cube.rotate(rot)
+		else:
+			self.cube.d_theta = Cube.normal_d_theta
 

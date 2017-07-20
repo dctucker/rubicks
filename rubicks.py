@@ -54,11 +54,30 @@ class Camera:
 		camera.axis = axis
 
 def keydown(evt):
+	keymap = {
+		't': 'u',
+		'y': 'U',
+		'b': 'D',
+		'n': 'd',
+		'e': 'l',
+		'd': 'L',
+		'i': 'R',
+		'k': 'r',
+		'g': 'f',
+		'h': 'F',
+		'f': 'B',
+		'j': 'b',
+	}
 	k = evt.key
+
+	if k in keymap:
+		solver.queue.insert(0, keymap[k])
+		return
+
 	if k in ('esc','Q','q'):
 		exit()
-	elif k.upper() in ('R','L','U','D','B','F'):
-		solver.queue.insert(0,k)
+	#elif k.upper() in ('R','L','U','D','B','F'):
+	#	solver.queue.insert(0,k)
 	elif k == 'left':
 		camera.d_theta_x = radians(-2)
 	elif k == 'right':
@@ -83,16 +102,39 @@ def keydown(evt):
 		select_block((0,0,-1))
 	elif k == "]":
 		select_block((0,0,1))
-	elif k in ('1','2','3','4','5','6','7','8','9','0'):
-		index = 9 + int(k)
-		index %= 10
-		sequence = Solver.sequences.keys()[index]
-		solver.move(sequence)
+
+	#elif k == '0':
+	#	solver.queue.insert(0, 'b')
+	#elif k == '.':
+	#	solver.queue.insert(0, 'B')
+	#elif k == '2':
+	#	solver.queue.insert(0, 'd')
+	#elif k == '3':
+	#	solver.queue.insert(0, 'D')
+	#elif k == '4':
+	#	solver.queue.insert(0, 'L')
+	#elif k == '7':
+	#	solver.queue.insert(0, 'l')
+	#elif k == '5':
+	#	solver.queue.insert(0, 'f')
+	#elif k == '6':
+	#	solver.queue.insert(0, 'F')
+	#elif k == '\n':
+	#	solver.queue.insert(0, 'r')
+	#elif k == '+':
+	#	solver.queue.insert(0, 'R')
+	#elif k == '8':
+	#	solver.queue.insert(0, 'u')
+	#elif k == '9':
+	#	solver.queue.insert(0, 'U')
+
+	#elif k in ('1','2','3','4','5','6','7','8','9','0'):
+	#	index = 9 + int(k)
+	#	index %= 10
+	#	sequence = Solver.sequences.keys()[index]
+	#	solver.move(sequence)
 	elif k == '*':
 		solver.scramble()
-	elif k == '\n':
-		#solver.white_cross()
-		pass
 	elif k == '/':
 		camera.orient()
 	elif k == '\\':
@@ -108,7 +150,6 @@ def keydown(evt):
 
 def keyup(evt):
 	k = evt.key
-	#print vars(evt)
 	if k in ('left','right'):
 		camera.d_theta_x = 0
 	elif k in ('up','down'):

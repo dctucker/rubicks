@@ -18,7 +18,8 @@ class Camera:
 
 	def tick(self):
 		if self.theta_remaining == 0:
-			self.cube.frame.rotate( angle=self.d_theta_x, axis=(0,1,0) )
+			x_axis = self.cube.frame.frame_to_world( self.cube.get_axle('U').get_center_block().pos )
+			self.cube.frame.rotate( angle=self.d_theta_x, axis=x_axis )
 			self.cube.frame.rotate( angle=self.d_theta_y, axis=(1,0,0) )
 			self.cube.frame.rotate( angle=self.d_theta_z, axis=(0,0,1) )
 			if self.d_theta_x == 0 and self.d_theta_y == 0:

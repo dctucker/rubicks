@@ -121,3 +121,28 @@ class Solver:
 		else:
 			self.cube.d_theta = Cube.normal_d_theta
 
+
+	def overall_metric(self):
+		N = 0
+		for b in self.cube.blocks:
+			m = mag(b.coordinate - b.expected_coordinate)
+			if m < epsilon:
+				m = 0
+			N -= m
+		return N
+
+	def face_metric(self, direction):
+		axle = self.cube.get_axle( direction )
+		blocks = axle.get_blocks()
+		center_block = axle.get_center_block()
+		center = center_block.surfaces[0].normal
+		N = 0
+		for b in blocks:
+			for s in b.surfaces:
+				if s.color == center_block.surfaces[0].color:
+					if mag(s.normal - center) < epsilon:
+						N += 1
+		return N
+
+	def face_edge_metric(self):
+		pass

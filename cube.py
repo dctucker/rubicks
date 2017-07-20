@@ -9,6 +9,12 @@ axle_pos = 0.60 # position of axles
 axle_opacity = 0.0
 axle_shade = 0.2  # color coefficient of axles
 
+def zero_epsilon(vec):
+	for i in range(len(vec)):
+		if abs(vec[i]) < epsilon:
+			vec[i] = 0
+	return vec
+
 class Face:
 	def __init__(self, cube, c, rotate, sign):
 		self.color = c
@@ -16,18 +22,22 @@ class Face:
 		self.labels = []
 		size = (face_w,face_w,face_g)
 		if sign == 0:
-			normal = 3
+			normal = vector(0,0,1)
+			#normal = 3
 		elif sign == 2:
-			normal = -3
+			normal = vector(0,0,-1)
+			#normal = -3
 		else:
-			normal = rotate[0] * sign + 2 * rotate[1] * sign
+			normal = vector(0,0,-sign).cross(rotate)
+			#normal = rotate[0] * sign + 2 * rotate[1] * sign
 		for i in [-1, 0, 1]:
 			for j in [-1, 0, 1]:
 				surface = box( frame=cube.frame, pos=(j*face_d, i*face_d, face_z), size=size, color=c )
 				surface.rotate( angle = sign * pi / 2.0, axis = rotate, origin = (0,0,0) )
 				surface.opacity = 0.75
-				surface.coordinate = (normal, i, j)
-				surface.expected_coordinate = (normal, i, j)
+				surface.normal = normal
+				#surface.coordinate = vector(i, j, normal)
+				#surface.expected_coordinate = vector(i, j, normal)
 				self.surfaces.append( surface )
 				#lab = label( pos=surface.pos, text="%d,%d,%d" % (normal,i,j) )
 
@@ -43,6 +53,10 @@ class Block(sphere):
 		pos = vector(px, py, pz) * (face_d - 0.5*face_g)
 		size = vector(face_w,face_w,face_w) * (1 + face_g)
 		self.blind = box( frame=cube.frame, pos=pos, size=size, color=(1,1,1) )
+	
+	def get_colors(self):
+		for s in self.surfaces:
+			yield s.color
 
 	def collision(self, box):
 		return \
@@ -51,10 +65,7 @@ class Block(sphere):
 			abs(self.pos.z - box.pos.z) <= (2 * self.radius + box.width *0.5)
 	
 	def rotate(self, angle, axis, origin):
-		self.coordinate = self.coordinate.rotate(angle=angle,axis=axis)
-		for i in range(len(self.coordinate)):
-			if abs(self.coordinate[i]) < epsilon:
-				self.coordinate[i] = 0
+		self.coordinate = zero_epsilon( self.coordinate.rotate(angle=angle,axis=axis) )
 		self.blind.rotate(self, angle=angle, axis=axis, origin=origin)
 		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
@@ -73,6 +84,30 @@ class Axle:
 		n = norm(self.pos)
 		r = 2 * face_d - face_g
 		#self.blind = box( frame=self.cube.frame, pos=n * face_w * 0.5, size=(r,r,r), axis=n, color=(0,0,0) )
+
+	def get_blocks(self):
+		ret = []
+		for block in self.cube.blocks:
+			if block.collision(self):
+				ret.append(block)
+		return ret
+
+	def get_center_block(self):
+		for b in self.get_blocks():
+			if mag(b.coordinate) == 1.0:
+				return b
+
+	def get_edge_blocks(self):
+		edge = mag((1,1,0))
+		for b in self.get_blocks():
+			if mag(b.coordinate) == edge:
+				yield b
+
+	def get_corner_blocks(self):
+		corner = mag((1,1,1))
+		for b in self.get_blocks():
+			if mag(b.coordinate) == corner:
+				yield b
 
 	def rotate(self, angle, axis, origin):
 		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)
@@ -158,15 +193,18 @@ class Cube:
 		self.selected_block = len(self.blocks) - 1
 		self.previous_colors = []
 
+	def get_axle(self, direction):
+		return self.axles[ self.axlemap[ direction ] ]
+
 	def orient(self, front=None, up=None):
 		if front is None and up is None:
 			self.axlemap = { 'U': 0, 'D': 1, 'L': 2, 'R': 3, 'F': 4, 'B': 5 }
 			return
 		if front is None:
-			front = self.axes[ self.axlemap['F'] ].pos
+			front = self.get_axle('F')
 		left = front.rotate(angle=radians(90), axis=up)
 		if up is None:
-			up = self.axes[ self.axlemap['U'] ].pos
+			up = self.get_axle('U').pos
 		directions = {
 			'U': -up,
 			'D':  up,
@@ -216,22 +254,21 @@ class Cube:
 			self.clockwise = -1;
 		else:
 			self.clockwise =  1
-		axle_index = self.axles[ self.axlemap[ d.upper() ] ]
-		self.start_rotation( axle_index )
+		self.start_rotation( self.get_axle( d.upper() ) )
 
 	def start_rotation(self, axle):
 		self.rotating_axle = axle
 		self.rotating_surfaces = []
 		self.rotating_blocks = []
 
-		for block in self.blocks:
-			if block.collision(axle):
-				self.rotating_blocks.append(block)
-				for surface in block.surfaces:
-					if surface not in self.rotating_surfaces:
-						self.rotating_surfaces.append(surface)
-					else:
-						print "attempting to add surface again"
+		blocks = axle.get_blocks()
+		for block in blocks:
+			self.rotating_blocks.append(block)
+			for surface in block.surfaces:
+				if surface not in self.rotating_surfaces:
+					self.rotating_surfaces.append(surface)
+				else:
+					print "attempting to add surface again"
 
 		if len(self.rotating_surfaces) != 21:
 			print "wrong number of surfaces %d" % len(self.rotating_surfaces)
@@ -248,6 +285,7 @@ class Cube:
 			axle.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			for s in self.rotating_surfaces:
 				s.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
+				s.normal = zero_epsilon( s.normal.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos) )
 			for b in self.rotating_blocks:
 				b.rotate(angle=radians(-self.d_theta * self.clockwise), axis=axle.pos, origin=axle.pos)
 			self.rotating_time += self.d_theta

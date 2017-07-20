@@ -114,6 +114,12 @@ def keydown(evt):
 		camera.orient()
 	elif k == '\\':
 		snap_to_block()
+	elif k == '?':
+		#print solver.overall_metric()
+		#print solver.face_metric('U')
+		for b in cube.get_axle('U').get_edge_blocks():
+			print [c for c in b.get_colors()]
+
 	else:
 		print vars(evt)
 

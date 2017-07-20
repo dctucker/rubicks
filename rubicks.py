@@ -67,9 +67,9 @@ def keydown(evt):
 	elif k == 'up':
 		camera.d_theta_y = radians(2)
 	elif k == 'page up':
-		camera.d_theta_z = radians(-2)
+		camera.d_theta_z = radians(-0.5)
 	elif k == 'page down':
-		camera.d_theta_z = radians(2)
+		camera.d_theta_z = radians(0.5)
 	elif k == '.':
 		coord = cube.blocks[ cube.selected_block ].coordinate
 		if coord.x < 1:

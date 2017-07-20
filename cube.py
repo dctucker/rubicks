@@ -40,6 +40,10 @@ class Block(sphere):
 		self.material = materials.shiny
 		self.surfaces = []
 
+		pos = vector(px, py, pz) * (face_d - 0.5*face_g)
+		size = vector(face_w,face_w,face_w) * (1 + 2 * face_g)
+		self.blind = box( frame=cube.frame, pos=pos, size=size, color=(0,0,0) )
+
 	def collision(self, box):
 		return \
 			abs(self.pos.x - box.pos.x) <= (2 * self.radius + box.length*0.5) and \
@@ -51,6 +55,7 @@ class Block(sphere):
 		for i in range(len(self.coordinate)):
 			if abs(self.coordinate[i]) < epsilon:
 				self.coordinate[i] = 0
+		self.blind.rotate(self, angle=angle, axis=axis, origin=origin)
 		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
 class Axle:
@@ -67,11 +72,11 @@ class Axle:
 
 		n = norm(self.pos)
 		r = 2 * face_d - face_g
-		self.blind = box( frame=self.cube.frame, pos=n * face_w * 0.5, size=(r,r,r), axis=n, color=(0,0,0) )
+		#self.blind = box( frame=self.cube.frame, pos=n * face_w * 0.5, size=(r,r,r), axis=n, color=(0,0,0) )
 
 	def rotate(self, angle, axis, origin):
 		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)
-		self.blind.rotate(self.blind, angle=angle, axis=axis, origin=origin)
+		#self.blind.rotate(self.blind, angle=angle, axis=axis, origin=origin)
 
 
 

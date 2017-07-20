@@ -70,36 +70,18 @@ def keydown(evt):
 		camera.d_theta_z = radians(-0.5)
 	elif k == 'page down':
 		camera.d_theta_z = radians(0.5)
-	elif k == '.':
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.x < 1:
-			coord = vector( coord.x + 1, coord.y, coord.z )
-			select_block(coord)
 	elif k == ',':
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.x > -1:
-			coord = vector( coord.x - 1, coord.y, coord.z )
-			select_block(coord)
+		select_block((-1,0,0))
+	elif k == '.':
+		select_block((1,0,0))
 	elif k == ';':
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.y > -1:
-			coord = vector( coord.x, coord.y - 1, coord.z )
-			select_block(coord)
+		select_block((0,-1,0))
 	elif k == "'":
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.y < 1:
-			coord = vector( coord.x, coord.y + 1, coord.z )
-			select_block(coord)
+		select_block((0,1,0))
 	elif k == "[":
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.z > -1:
-			coord = vector( coord.x, coord.y, coord.z - 1 )
-			select_block(coord)
+		select_block((0,0,-1))
 	elif k == "]":
-		coord = cube.blocks[ cube.selected_block ].coordinate
-		if coord.z < 1:
-			coord = vector( coord.x, coord.y, coord.z + 1 )
-			select_block(coord)
+		select_block((0,0,1))
 	elif k in ('1','2','3','4','5','6','7','8','9','0'):
 		index = 9 + int(k)
 		index %= 10
@@ -145,8 +127,11 @@ def mousemove(evt):
 					cube.select_block( block.coordinate )
 
 def select_block(coord):
-	cube.select_block(coord)
-	camera.snap_to_block()
+	coord = cube.blocks[ cube.selected_block ].coordinate + vector(coord)
+	print coord
+	if coord.x >= -1 and coord.x <= 1 and coord.y >= -1 and coord.y <= 1 and coord.z >= -1 and coord.z <= 1:
+		cube.select_block(coord)
+		camera.snap_to_block()
 
 
 scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, background=(0.2,0.2,0.3) )

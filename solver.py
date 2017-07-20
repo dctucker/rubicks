@@ -144,5 +144,8 @@ class Solver:
 						N += 1
 		return N
 
-	def face_edge_metric(self):
-		pass
+	def face_edge_metric(self, direction):
+		axle = cube.get_axle(direction)
+		center_block = axle.get_center_block()
+		for b in axle.get_edge_blocks():
+			print [c for c in b.get_colors()]

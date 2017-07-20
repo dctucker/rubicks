@@ -41,8 +41,8 @@ class Block(sphere):
 		self.surfaces = []
 
 		pos = vector(px, py, pz) * (face_d - 0.5*face_g)
-		size = vector(face_w,face_w,face_w) * (1 + 2 * face_g)
-		self.blind = box( frame=cube.frame, pos=pos, size=size, color=(0,0,0) )
+		size = vector(face_w,face_w,face_w) * (1 + face_g)
+		self.blind = box( frame=cube.frame, pos=pos, size=size, color=(1,1,1) )
 
 	def collision(self, box):
 		return \
@@ -195,6 +195,15 @@ class Cube:
 				for surface in face.surfaces:
 					if block.collision(surface):
 						block.surfaces.append(surface)
+		for b in range(len(self.blocks)):
+			avg_color = vector(0,0,0)
+			block = self.blocks[b]
+			for s in block.surfaces:
+				avg_color += s.color
+			avg_color /= len(block.surfaces)
+			block.color = avg_color
+			block.blind.color = avg_color * 0.2
+
 
 	def rotate(self, d):
 		if self.rotating_axle is not None or self.rotating_time != 0:

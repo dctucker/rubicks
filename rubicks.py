@@ -128,9 +128,15 @@ def keyup(evt):
 		camera.d_theta_z = 0
 
 def mousemove(evt):
-	if isinstance(scene.mouse.pick, Block):
+	pick = scene.mouse.pick
+	if isinstance(pick, Block):
 		if cube.blocks[ cube.selected_block ] != scene.mouse.pick:
 			cube.select_block( scene.mouse.pick.coordinate )
+	elif isinstance(pick, box):
+		for block in cube.blocks:
+			for s in block.surfaces:
+				if s == pick:
+					cube.select_block( block.coordinate )
 
 def select_block(coord):
 	cube.select_block(coord)

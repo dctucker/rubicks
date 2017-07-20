@@ -53,6 +53,28 @@ class Block(sphere):
 				self.coordinate[i] = 0
 		sphere.rotate(self, angle=angle, axis=axis, origin=origin)
 
+class Axle:
+	def __init__(self, cube, pos, size, color):
+		self.cube = cube
+		self.box = box( frame=self.cube.frame, pos=pos, size=size, color=color )
+		self.box.opacity = axle_opacity
+		self.pos = self.box.pos
+		self.size = self.box.size
+		self.length = self.box.length
+		self.height = self.box.height
+		self.width  = self.box.width
+		self.color = self.box.color
+
+		n = norm(self.pos)
+		r = 2 * face_d - face_g
+		self.blind = box( frame=self.cube.frame, pos=n * face_w * 0.5, size=(r,r,r), axis=n, color=(0,0,0) )
+
+	def rotate(self, angle, axis, origin):
+		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)
+		self.blind.rotate(self.blind, angle=angle, axis=axis, origin=origin)
+
+
+
 class Cube:
 	palette = [
 		vector(1,1,1),   #white
@@ -72,7 +94,7 @@ class Cube:
 		self.orient()
 
 		self.clockwise = 1
-		self.centroid = sphere( frame=self.frame, pos=( 0, 0, 0 ), radius=face_z-face_g, color=( 0, 0, 0 ) )
+		#self.centroid = sphere( frame=self.frame, pos=( 0, 0, 0 ), radius=face_z-face_g, color=( 0, 0, 0 ) )
 
 		self.faces = []
 		self.faces.append( Face( self, self.palette[0], (1,0,0), -1) )
@@ -86,12 +108,30 @@ class Cube:
 		z3 = face_z / 3.0
 		k = axle_pos
 		self.axles = []
-		self.axles.append( box( frame=self.frame, pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[0] ) )
-		self.axles.append( box( frame=self.frame, pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[1] ) )
-		self.axles.append( box( frame=self.frame, pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[2] ) )
-		self.axles.append( box( frame=self.frame, pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[3] ) )
-		self.axles.append( box( frame=self.frame, pos=(  0, 0, k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[4] ) )
-		self.axles.append( box( frame=self.frame, pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[5] ) )
+		self.axles.append( Axle( self, pos=(  0, k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[0] ) )
+		self.axles.append( Axle( self, pos=(  0,-k, 0 ), size=( z2, z3, z2 ), color=axle_shade * self.palette[1] ) )
+		self.axles.append( Axle( self, pos=( -k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[2] ) )
+		self.axles.append( Axle( self, pos=(  k, 0, 0 ), size=( z3, z2, z2 ), color=axle_shade * self.palette[3] ) )
+		self.axles.append( Axle( self, pos=(  0, 0, k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[4] ) )
+		self.axles.append( Axle( self, pos=(  0, 0,-k ), size=( z2, z2, z3 ), color=axle_shade * self.palette[5] ) )
+
+		#k = face_w * 0.5
+		#self.blinds = []
+		#self.blinds.append( ring( frame=self.frame, pos=(  0, k, 0 ), radius=face_z-face_g, axis=(0,1,0), color=(0,0,0) ) )
+		#self.blinds.append( ring( frame=self.frame, pos=(  0,-k, 0 ), radius=face_z-face_g, axis=(0,1,0), color=(0,0,0) ) )
+		#self.blinds.append( ring( frame=self.frame, pos=( -k, 0, 0 ), radius=face_z-face_g, axis=(1,0,0), color=(0,0,0) ) )
+		#self.blinds.append( ring( frame=self.frame, pos=(  k, 0, 0 ), radius=face_z-face_g, axis=(1,0,0), color=(0,0,0) ) )
+		#self.blinds.append( ring( frame=self.frame, pos=(  0, 0,-k ), radius=face_z-face_g, axis=(0,0,1), color=(0,0,0) ) )
+		#self.blinds.append( ring( frame=self.frame, pos=(  0, 0, k ), radius=face_z-face_g, axis=(0,0,1), color=(0,0,0) ) )
+
+		#k = face_w * 0.5
+		#self.blinds = []
+		#self.blinds.append( box( frame=self.frame, pos=(  0, k, 0 ), radius=face_z-face_g, axis=(0,1,0), color=(0,0,0) ) )
+		#self.blinds.append( box( frame=self.frame, pos=(  0,-k, 0 ), radius=face_z-face_g, axis=(0,1,0), color=(0,0,0) ) )
+		#self.blinds.append( box( frame=self.frame, pos=( -k, 0, 0 ), radius=face_z-face_g, axis=(1,0,0), color=(0,0,0) ) )
+		#self.blinds.append( box( frame=self.frame, pos=(  k, 0, 0 ), radius=face_z-face_g, axis=(1,0,0), color=(0,0,0) ) )
+		#self.blinds.append( box( frame=self.frame, pos=(  0, 0,-k ), radius=face_z-face_g, axis=(0,0,1), color=(0,0,0) ) )
+		#self.blinds.append( box( frame=self.frame, pos=(  0, 0, k ), radius=face_z-face_g, axis=(0,0,1), color=(0,0,0) ) )
 
 		self.blocks = []
 		for i in [-1, 0, 1]:
@@ -152,7 +192,6 @@ class Cube:
 						block.surfaces.append(surface)
 
 	def rotate(self, d):
-
 		if self.rotating_axle is not None or self.rotating_time != 0:
 			return
 
@@ -243,5 +282,5 @@ class Cube:
 			s.material = materials.unshaded
 		avg_color /= len(block.surfaces)
 		block.color = avg_color
-		block.opacity = 0.4
+		block.opacity = 0.2
 	

@@ -11,6 +11,7 @@ class Camera:
 		self.x_axis = vector(0,0,0)
 		self.theta_remaining = 0
 
+		self.mirrors = []
 		self.scene = scene
 		self.cube = cube
 		self.scene.fov = radians(30)
@@ -35,10 +36,14 @@ class Camera:
 			if abs(self.theta_remaining) < radians(8):
 				self.theta_remaining = 0
 				self.orient()
+		for mirror in self.mirrors:
+			mirror.tick()
 
 	def orient(self):
 		f = self.cube.frame
 		self.cube.orient(f.world_to_frame(self.scene.forward), f.world_to_frame(self.scene.up))
+		for mirror in self.mirrors:
+			mirror.needs_update = True
 
 	def snap_to_block(self):
 		origin = vector(self.cube.frame.axis)
@@ -50,13 +55,13 @@ class Camera:
 		axis = n.cross( sel_pos )
 		#self.cube.frame.rotate( angle=angle, axis=axis )
 
-		camera.theta_remaining = angle
-		camera.axis = axis
+		self.theta_remaining = angle
+		self.axis = axis
 
 class Mirror:
 	def __init__(self, cube, axle, pos, rotate):
 		self.frame = frame( pos=pos )
-		self.needs_recalculating = True
+		self.needs_update = True
 		self.axle = axle
 		#self.ref_axle = ref_axle
 		self.rotate = rotate
@@ -71,9 +76,9 @@ class Mirror:
 
 	def tick(self):
 		if self.cube.rotating_axle is not None:
-			self.needs_recalculating = True
+			self.needs_update = True
 			return
-		if not self.needs_recalculating:
+		if not self.needs_update:
 			return
 		#ref_axle = self.cube.get_axle(self.ref_axle)
 		axle = self.cube.get_axle(self.axle)
@@ -107,4 +112,4 @@ class Mirror:
 		#	#print i,j
 		#	print b.coordinate
 
-		self.needs_recalculating = False
+		self.needs_update = False

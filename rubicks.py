@@ -7,18 +7,23 @@ from camera import *
 
 def keydown(evt):
 	keymap = {
-		't': 'u',
-		'y': 'U',
-		'b': 'D',
-		'n': 'd',
+		'r': 'U',
+		'u': 'u',
+		't': 'U',
+		'y': 'u',
+		'b': 'd',
+		'v': 'd',
+		's': 'd',
+		'l': 'd',
+		'n': 'D',
 		'e': 'l',
 		'd': 'L',
 		'i': 'R',
 		'k': 'r',
-		'g': 'f',
-		'h': 'F',
-		'f': 'B',
-		'j': 'b',
+		'f': 'f',
+		'j': 'F',
+		'g': 'B',
+		'h': 'b',
 	}
 	k = evt.key
 
@@ -35,9 +40,9 @@ def keydown(evt):
 	elif k == 'right':
 		camera.d_theta_x = radians(2)
 	elif k == 'down':
-		camera.d_theta_y = radians(-2)
-	elif k == 'up':
 		camera.d_theta_y = radians(2)
+	elif k == 'up':
+		camera.d_theta_y = radians(-2)
 	elif k == 'page up':
 		camera.d_theta_z = radians(-0.5)
 	elif k == 'page down':
@@ -142,18 +147,17 @@ scene.bind('mousemove', mousemove)
 cube = Cube()
 solver = Solver(cube)
 camera = Camera(scene, cube)
-mirrors = []
 rot = 45
-mirrors.append( Mirror(cube,'L', (-1.8,    0,    1), radians(-90 )))
-mirrors.append( Mirror(cube,'R', ( 1.8,    0,    1), radians( 90 )))
-mirrors.append( Mirror(cube,'U', (   0,  1.4,    0), radians(  0 )))
-mirrors.append( Mirror(cube,'D', (   0, -1.4,    0), radians(  0 )))
-mirrors.append( Mirror(cube,'B', ( 1.4, -1.2, -2.5), radians(  0 )))
-mirrors[0].frame.rotate(angle=radians(-45), axis=(0,1,0), origin=mirrors[0].frame.pos)
-mirrors[1].frame.rotate(angle=radians( 45), axis=(0,1,0), origin=mirrors[1].frame.pos)
-mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=mirrors[2].frame.pos)
-mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=mirrors[3].frame.pos)
-mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=mirrors[4].frame.pos)
+camera.mirrors.append( Mirror(cube,'L', (-1.8,    0,    1), radians(-90 )))
+camera.mirrors.append( Mirror(cube,'R', ( 1.8,    0,    1), radians( 90 )))
+camera.mirrors.append( Mirror(cube,'U', (   0,  1.4,    0), radians(  0 )))
+camera.mirrors.append( Mirror(cube,'D', (   0, -1.4,    0), radians(  0 )))
+camera.mirrors.append( Mirror(cube,'B', ( 1.4, -1.2, -2.5), radians(  0 )))
+camera.mirrors[0].frame.rotate(angle=radians(-45), axis=(0,1,0), origin=camera.mirrors[0].frame.pos)
+camera.mirrors[1].frame.rotate(angle=radians( 45), axis=(0,1,0), origin=camera.mirrors[1].frame.pos)
+camera.mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=camera.mirrors[2].frame.pos)
+camera.mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=camera.mirrors[3].frame.pos)
+camera.mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=camera.mirrors[4].frame.pos)
 
 #pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
 queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
@@ -164,8 +168,6 @@ while 1:
 	cube.tick()
 	camera.tick()
 	solver.tick()
-	for mirror in mirrors:
-		mirror.tick()
 
 	text = ""
 	for item in solver.queue:

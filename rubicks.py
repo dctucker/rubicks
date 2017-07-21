@@ -3,90 +3,7 @@
 from visual import *
 from cube import *
 from solver import *
-
-class Camera:
-	def __init__(self, scene, cube):
-		self.d_theta_x = 0
-		self.d_theta_y = 0
-		self.d_theta_z = 0
-		self.axis = vector(1,0,0)
-		self.theta_remaining = 0
-
-		self.scene = scene
-		self.cube = cube
-		self.scene.fov = radians(30)
-
-	def tick(self):
-		if self.theta_remaining == 0:
-			x_axis = self.cube.frame.frame_to_world( self.cube.get_axle('U').get_center_block().pos )
-			self.cube.frame.rotate( angle=self.d_theta_x, axis=x_axis )
-			self.cube.frame.rotate( angle=self.d_theta_y, axis=(1,0,0) )
-			self.cube.frame.rotate( angle=self.d_theta_z, axis=(0,0,1) )
-			if self.d_theta_x == 0 and self.d_theta_y == 0:
-				if self.d_theta_z == 0:
-					self.orient()
-			#	if abs(self.cube.frame.axis.x * self.cube.frame.axis.y * self.cube.frame.axis.z) > radians(1):
-			#		self.d_theta_z = radians(1)
-			#	else:
-			#		self.d_theta_z = 0
-		else:
-			self.theta_remaining = sign(self.theta_remaining) * ( abs(self.theta_remaining) - radians(1) )
-			self.cube.frame.rotate( angle=radians(1) * sign(self.theta_remaining), axis=self.axis )
-			if abs(self.theta_remaining) < radians(8):
-				self.theta_remaining = 0
-				self.orient()
-
-	def orient(self):
-		f = self.cube.frame
-		self.cube.orient(f.world_to_frame(self.scene.forward), f.world_to_frame(self.scene.up))
-
-	def snap_to_block(self):
-		origin = vector(self.cube.frame.axis)
-
-		sel_pos = self.cube.frame.frame_to_world( self.cube.blocks[ self.cube.selected_block ].pos )
-		sel_pos = norm(sel_pos)
-		n = -scene.forward
-		angle = -diff_angle( n, sel_pos )
-		axis = n.cross( sel_pos )
-		#self.cube.frame.rotate( angle=angle, axis=axis )
-
-		camera.theta_remaining = angle
-		camera.axis = axis
-
-class Mirror:
-	def __init__(self, cube, axle, ref_axle):
-		self.axle = axle
-		self.ref_axle = ref_axle
-		self.cube = cube
-		self.blocks = [];
-		size = 0.2
-		for i in [ -1, 0, 1 ]:
-			self.blocks.append([])
-			for j in [ -1, 0, 1 ]:
-				pos = vector(0,2,0) + vector(i, j, 0) * size
-				self.blocks[i+1].append( box( pos=pos, size=(size,size,0.01), color=(1,0,1) ) )
-
-	def tick(self):
-		ref_axle = self.cube.get_axle(self.ref_axle)
-		axle = self.cube.get_axle(self.axle)
-		center = axle.get_center_block()
-		ref_center = ref_axle.get_center_block()
-		axis = center.coordinate.cross(ref_center.coordinate)
-		axes = []
-		for i in range(len(center.coordinate)):
-			if abs(center.coordinate[i]) < epsilon:
-				axes.append(i)
-		#print axes
-				
-		for (b,s) in axle.get_face_surfaces():
-			#coord = axis - b.coordinate #b.coordinate.rotate(angle=radians(-90), axis=axis)
-			#coord = s.normal.cross(b.coordinate)
-			i = int(b.coordinate[ axes[0] ])
-			j = int(b.coordinate[ axes[1] ])
-			#print i,j
-			self.blocks[ i +1 ][ j + 1 ].color = s.color
-		#print
-
+from camera import *
 
 def keydown(evt):
 	keymap = {
@@ -172,15 +89,18 @@ def keydown(evt):
 		solver.scramble()
 	elif k == '/':
 		camera.orient()
-	elif k == '\\':
-		snap_to_block()
 	elif k == '?':
+		mirror.tick()
 		#print solver.overall_metric()
 		#print solver.face_metric('U')
-		for b in cube.get_axle('U').get_edge_blocks():
-			#print [c for c in b.get_colors()]
-			print b.coordinate
+
+		#for b in cube.get_axle('U').get_edge_blocks():
+		#	print b.coordinate
+
+		#for (b,s) in cube.get_axle('U').get_face_surfaces():
+		#	print b.coordinate
 		print
+
 
 
 	else:
@@ -214,7 +134,7 @@ def select_block(coord):
 		camera.snap_to_block()
 
 
-scene = display( title="Rubick.py", x=800, y=400, width=800, height=600, background=(0.2,0.2,0.3) )
+scene = display( title="Rubick.py", width=800, height=600, background=(0.2,0.2,0.3) )
 scene.bind('keydown', keydown)
 scene.bind('keyup'  , keyup)
 scene.bind('mousemove', mousemove)
@@ -222,7 +142,18 @@ scene.bind('mousemove', mousemove)
 cube = Cube()
 solver = Solver(cube)
 camera = Camera(scene, cube)
-mirror = Mirror(cube,'U','B')
+mirrors = []
+rot = 45
+mirrors.append( Mirror(cube,'L', (-1.8,    0,    1), radians(-90 )))
+mirrors.append( Mirror(cube,'R', ( 1.8,    0,    1), radians( 90 )))
+mirrors.append( Mirror(cube,'U', (   0,  1.4,    0), radians(  0 )))
+mirrors.append( Mirror(cube,'D', (   0, -1.4,    0), radians(  0 )))
+mirrors.append( Mirror(cube,'B', ( 1.4, -1.2, -2.5), radians(  0 )))
+mirrors[0].frame.rotate(angle=radians(-45), axis=(0,1,0), origin=mirrors[0].frame.pos)
+mirrors[1].frame.rotate(angle=radians( 45), axis=(0,1,0), origin=mirrors[1].frame.pos)
+mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=mirrors[2].frame.pos)
+mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=mirrors[3].frame.pos)
+mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=mirrors[4].frame.pos)
 
 #pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
 queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
@@ -233,7 +164,8 @@ while 1:
 	cube.tick()
 	camera.tick()
 	solver.tick()
-	mirror.tick()
+	for mirror in mirrors:
+		mirror.tick()
 
 	text = ""
 	for item in solver.queue:

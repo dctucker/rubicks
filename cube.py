@@ -12,7 +12,7 @@ axle_shade = 0.2  # color coefficient of axles
 def zero_epsilon(vec):
 	for i in range(len(vec)):
 		if abs(vec[i]) < epsilon:
-			vec[i] = 0
+			vec[i] = 0.0
 	return vec
 
 class Face:
@@ -43,7 +43,7 @@ class Face:
 
 class Block(sphere):
 	def __init__(self, cube, px,py,pz):
-		self.expected_coordinate = vector(px, py, pz)
+		self.expected_coordinate = vector(int(px), int(py), int(pz))
 		self.coordinate = vector(px, py, pz)
 		sphere.__init__(self, frame=cube.frame, pos=(px*face_z, py*face_z, pz*face_z), radius=face_w*0.3 )
 		self.opacity = 0.0
@@ -115,12 +115,15 @@ class Axle:
 		return ret
 
 	def get_face_surfaces(self):
+		ret = []
 		center_block = self.get_center_block()
 		center = center_block.surfaces[0].normal
 		for b in self.get_blocks():
 			for s in b.surfaces:
 				if mag(s.normal - center) < epsilon:
-					yield (b,s)
+					ret.append( (b,s) )
+		ret.sort(key=lambda v: 8*v[0].coordinate.x+4*v[0].coordinate.y+v[0].coordinate.z)
+		return ret
 
 	def rotate(self, angle, axis, origin):
 		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)

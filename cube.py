@@ -73,6 +73,7 @@ class Axle:
 	def __init__(self, cube, pos, size, color):
 		self.cube = cube
 		self.box = box( frame=self.cube.frame, pos=pos, size=size, color=color )
+		self.north = radians(0)
 		self.box.opacity = axle_opacity
 		self.pos = self.box.pos
 		self.size = self.box.size
@@ -127,6 +128,7 @@ class Axle:
 
 	def rotate(self, angle, axis, origin):
 		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)
+		self.north = (self.north + angle) % radians(360)
 		#self.blind.rotate(self.blind, angle=angle, axis=axis, origin=origin)
 
 
@@ -309,6 +311,7 @@ class Cube:
 				self.stop_rotation()
 
 	def stop_rotation(self):
+		print self.rotating_axle.north
 		#print self.rotating_blocks[0].coordinate
 		#print self.blocks[ self.selected_block ].coordinate
 		self.rotating_axle = None

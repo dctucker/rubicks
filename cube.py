@@ -90,6 +90,7 @@ class Axle:
 		for block in self.cube.blocks:
 			if block.collision(self):
 				ret.append(block)
+		assert( len(ret) == 9 )
 		return ret
 
 	def get_center_block(self):
@@ -98,16 +99,28 @@ class Axle:
 				return b
 
 	def get_edge_blocks(self):
+		ret = []
 		edge = mag((1,1,0))
 		for b in self.get_blocks():
-			if mag(b.coordinate) == edge:
-				yield b
+			if abs(mag(b.coordinate) - edge) < epsilon:
+				ret.append(b)
+		return ret
 
 	def get_corner_blocks(self):
+		ret = []
 		corner = mag((1,1,1))
 		for b in self.get_blocks():
-			if mag(b.coordinate) == corner:
-				yield b
+			if mag(b.coordinate) - corner < epsilon:
+				ret.append(b)
+		return ret
+
+	def get_face_surfaces(self):
+		center_block = self.get_center_block()
+		center = center_block.surfaces[0].normal
+		for b in self.get_blocks():
+			for s in b.surfaces:
+				if mag(s.normal - center) < epsilon:
+					yield (b,s)
 
 	def rotate(self, angle, axis, origin):
 		self.box.rotate(self.box, angle=angle, axis=axis, origin=origin)

@@ -53,6 +53,41 @@ class Camera:
 		camera.theta_remaining = angle
 		camera.axis = axis
 
+class Mirror:
+	def __init__(self, cube, axle, ref_axle):
+		self.axle = axle
+		self.ref_axle = ref_axle
+		self.cube = cube
+		self.blocks = [];
+		size = 0.2
+		for i in [ -1, 0, 1 ]:
+			self.blocks.append([])
+			for j in [ -1, 0, 1 ]:
+				pos = vector(0,2,0) + vector(i, j, 0) * size
+				self.blocks[i+1].append( box( pos=pos, size=(size,size,0.01), color=(1,0,1) ) )
+
+	def tick(self):
+		ref_axle = self.cube.get_axle(self.ref_axle)
+		axle = self.cube.get_axle(self.axle)
+		center = axle.get_center_block()
+		ref_center = ref_axle.get_center_block()
+		axis = center.coordinate.cross(ref_center.coordinate)
+		axes = []
+		for i in range(len(center.coordinate)):
+			if abs(center.coordinate[i]) < epsilon:
+				axes.append(i)
+		#print axes
+				
+		for (b,s) in axle.get_face_surfaces():
+			#coord = axis - b.coordinate #b.coordinate.rotate(angle=radians(-90), axis=axis)
+			#coord = s.normal.cross(b.coordinate)
+			i = int(b.coordinate[ axes[0] ])
+			j = int(b.coordinate[ axes[1] ])
+			#print i,j
+			self.blocks[ i +1 ][ j + 1 ].color = s.color
+		#print
+
+
 def keydown(evt):
 	keymap = {
 		't': 'u',
@@ -143,7 +178,10 @@ def keydown(evt):
 		#print solver.overall_metric()
 		#print solver.face_metric('U')
 		for b in cube.get_axle('U').get_edge_blocks():
-			print [c for c in b.get_colors()]
+			#print [c for c in b.get_colors()]
+			print b.coordinate
+		print
+
 
 	else:
 		print vars(evt)
@@ -184,6 +222,7 @@ scene.bind('mousemove', mousemove)
 cube = Cube()
 solver = Solver(cube)
 camera = Camera(scene, cube)
+mirror = Mirror(cube,'U','B')
 
 #pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
 queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
@@ -194,6 +233,7 @@ while 1:
 	cube.tick()
 	camera.tick()
 	solver.tick()
+	mirror.tick()
 
 	text = ""
 	for item in solver.queue:

@@ -95,7 +95,8 @@ def keydown(evt):
 	elif k == '/':
 		camera.orient()
 	elif k == '?':
-		mirror.tick()
+		for axle in cube.axles:
+			print axle.pos
 		#print solver.overall_metric()
 		#print solver.face_metric('U')
 
@@ -159,6 +160,8 @@ camera.mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=camera.m
 camera.mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=camera.mirrors[3].frame.pos)
 camera.mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=camera.mirrors[4].frame.pos)
 
+double = Double(cube)
+
 #pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
 queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
 forward_label = label( title=""   , pos=(0, 1.0, 0), xoffset=1, box=False )
@@ -166,6 +169,7 @@ forward_label = label( title=""   , pos=(0, 1.0, 0), xoffset=1, box=False )
 while 1:
 	rate(60)
 	cube.tick()
+	double.tick()
 	camera.tick()
 	solver.tick()
 

@@ -36,6 +36,20 @@ class Camera:
 			if abs(self.theta_remaining) < radians(8):
 				self.theta_remaining = 0
 				self.orient()
+
+		#if self.d_theta_y != 0:
+		#	for mirror in self.mirrors:
+		#		if mirror.axle == 'L':
+		#			mirror.frame.rotate(angle=-self.d_theta_y, axis=(0,0,1))
+		#		if mirror.axle == 'R':
+		#			mirror.frame.rotate(angle=self.d_theta_y, axis=(0,0,1))
+		#if self.d_theta_x != 0:
+		#	for mirror in self.mirrors:
+		#		if mirror.axle == 'U':
+		#			mirror.frame.rotate(angle=self.d_theta_x, axis=(0,0,1))
+		#		elif mirror.axle == 'D':
+		#			mirror.frame.rotate(angle=-self.d_theta_x, axis=(0,0,1))
+
 		for mirror in self.mirrors:
 			mirror.tick()
 
@@ -58,6 +72,26 @@ class Camera:
 		self.theta_remaining = angle
 		self.axis = axis
 
+class Double:
+	def __init__(self, cube):
+		self.cube = cube
+		self.frame = frame( pos=(-2,-2,-3) )
+		self.blocks = []
+		self.surfaces = []
+		for b in range(len(self.cube.blocks)):
+			self.blocks.append([])
+			for s in range(len(self.cube.blocks[b].surfaces)):
+				surface = self.cube.blocks[b].surfaces[s]
+				size = (0.35,0.35,0.35)
+				self.blocks[b].append( box( frame=self.frame, pos=surface.pos, size=size, color=surface.color ) )
+
+	def tick(self):
+		for b in range(len(self.cube.blocks)):
+			for s in range(len(self.cube.blocks[b].surfaces)):
+				surface = self.cube.blocks[b].surfaces[s]
+				self.blocks[b][s].pos = self.cube.frame.frame_to_world(surface.pos.rotate(angle=radians(180), axis=(0,1,0)) )
+				self.blocks[b][s].axis = surface.axis
+
 class Mirror:
 	def __init__(self, cube, axle, pos, rotate):
 		self.frame = frame( pos=pos )
@@ -66,13 +100,13 @@ class Mirror:
 		#self.ref_axle = ref_axle
 		self.rotate = rotate
 		self.cube = cube
-		self.blocks = [];
+		self.facets = [];
 		size = 0.2
 		for i in [ -1, 0, 1 ]:
-			self.blocks.append([])
+			self.facets.append([])
 			for j in [ -1, 0, 1 ]:
 				p = vector(j, i, 0) * size * 1.05
-				self.blocks[i+1].append( box( frame=self.frame, pos=p, size=(size,size,0.01), color=(1,0,1) ) )
+				self.facets[i+1].append( box( frame=self.frame, pos=p, size=(size,size,0.01), color=(1,0,1) ) )
 
 	def tick(self):
 		if self.cube.rotating_axle is not None:
@@ -80,14 +114,11 @@ class Mirror:
 			return
 		if not self.needs_update:
 			return
-		#ref_axle = self.cube.get_axle(self.ref_axle)
 		axle = self.cube.get_axle(self.axle)
 		center = axle.get_center_block()
-		#ref_center = ref_axle.get_center_block()
-		#axis = center.coordinate.cross(ref_center.coordinate)
 		axes = []
-		#rot = diff_angle( center.coordinate, ref_center.coordinate )
 		rot = self.rotate
+		tilt = diff_angle( self.cube.get_axle('U').pos, axle.pos )
 		#print center.coordinate, ref_center.coordinate, rot
 		for i in range(len(center.coordinate)):
 			if abs(center.coordinate[i]) < epsilon:
@@ -96,20 +127,12 @@ class Mirror:
 		for b in axle.get_blocks():
 			v = vector( b.coordinate[ axes[0] ], b.coordinate[ axes[1] ] )
 			v = v.rotate(angle=rot, axis=(0,0,1))
+			v = v.rotate(angle=tilt, axis=(0,0,1))
 			bi = int(round(v.x))
 			bj = int(round(v.y))
 			for s in b.surfaces:
 				if mag(s.normal - center.surfaces[0].normal) < epsilon:
 					#print v, bi,bj
-					self.blocks[ bi + 1 ][ bj + 1 ].color = s.color
-
-		#for (b,s) in axle.get_face_surfaces():
-		#	#coord = axis - b.coordinate #b.coordinate.rotate(angle=radians(-90), axis=axis)
-		#	#coord = s.normal.cross(b.coordinate)
-		#	i = int(b.coordinate[ axes[0] ])
-		#	j = int(b.coordinate[ axes[1] ])
-		#	self.blocks[ i + 1 ][ j + 1 ].color = s.color
-		#	#print i,j
-		#	print b.coordinate
+					self.facets[ bi + 1 ][ bj + 1 ].color = s.color
 
 		self.needs_update = False

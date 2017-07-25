@@ -144,13 +144,13 @@ scene = display( title="Rubick.py", width=800, height=600, background=(0.1,0.1,0
 scene.lights = [
 	#distant_light(direction=(1, 0, 0), color=color.gray(0.6)),
 	#distant_light(direction=(0,  3, -3), color=color.gray(0.9)),
-	local_light(  pos=(0, 0, 5), color=color.gray(0.5)),
+	local_light(  pos=(0, 0, 5), color=color.gray(0.3)),
 	local_light(  pos=(3, -1, 3), color=color.gray(0.3)),
 	local_light(  pos=(-3, -1, 3), color=color.gray(0.3)),
-	local_light(  pos=(0, 8, 1), color=color.gray(0.4))
+	local_light(  pos=(0, 8, 1), color=color.gray(0.3))
 ]
-scene.range = (4,4,10)
-background = box( pos=(0,0,-10), size=(20,20,0.01), color=(0.2,0.2,0.2), material=materials.wood )
+scene.range = (3,3,10)
+background = box( pos=(0,0,-10), size=(20,20,0.01), color=(0.2,0.1,0.0), material=materials.wood )
 #background = box( pos=(-3,-1.5,-9), size=(4,0.1,8), color=(0.0,0.0,0.0), material=materials.rough )
 #background = box( pos=(-4,-3,-9), size=(4.5,4,0.1), color=(0.0,0.0,0.0), material=materials.rough )
 scene.bind('keydown', keydown)

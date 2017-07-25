@@ -75,9 +75,9 @@ class Camera:
 class Double:
 	def __init__(self, cube):
 		self.cube = cube
-		self.frame = frame( pos=(-4,-2.7, -7), size=(0.3,0.3,0.3) )
-		shield   = box( frame=self.frame, pos=(-0.5,0, 2), size=(5,4,0), color=color.gray(0.1), opacity=0.3, material=materials.shiny)
-		backdrop = box( frame=self.frame, pos=(-0.5,0,-2), size=(5,4,0), color=(0.1,0.15,0.2), opacity=0.4, material=materials.unshaded)
+		self.frame = frame( pos=(-3.5,-2.5, -7) )
+		shield   = box( frame=self.frame, pos=(-0.5,   0, 2), size=(4.4,2.9,0), color=color.gray(0.1), opacity=0.3, material=materials.shiny)
+		backdrop = box( frame=self.frame, pos=(-0.7,-0.75,-2), size=(4  ,  4,0), color=(0.1,0.15,0.2), opacity=0.4, material=materials.unshaded)
 		#shield.rotate(angle=radians(-15), axis=(1,0,0), origin=(0,0,0))
 		#shield.rotate(angle=radians( 15), axis=(0,1,0), origin=(0,0,0))
 		self.blocks = []
@@ -86,7 +86,7 @@ class Double:
 			self.blocks.append([])
 			for s in range(len(self.cube.blocks[b].surfaces)):
 				surface = self.cube.blocks[b].surfaces[s]
-				size = (0.35,0.35,0.35)
+				size = vector(0.35,0.35,0.35) * 0.5
 				newbox = box( frame=self.frame, pos=surface.pos, size=size, color=surface.color )
 				newbox.rotate(angle=radians(45), axis=(1,1,0), origin=(0,0,0))
 				newbox.material = materials.rough
@@ -96,7 +96,7 @@ class Double:
 		for b in range(len(self.cube.blocks)):
 			for s in range(len(self.cube.blocks[b].surfaces)):
 				surface = self.cube.blocks[b].surfaces[s]
-				pos = -surface.pos
+				pos = -surface.pos * 0.5
 				self.blocks[b][s].pos = self.cube.frame.frame_to_world( pos )
 				#self.blocks[b][s].axis = surface.axis
 

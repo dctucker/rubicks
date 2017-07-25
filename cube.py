@@ -1,7 +1,7 @@
 from visual import *
 
 epsilon = 0.0000001
-face_g = 0.05 # box thinness
+face_g = 0.04 # box thinness
 face_w = 0.45 # size of surfaces
 face_z = 0.75 # z distance of surfaces
 face_d = 0.5  # x/y distance of surfaces
@@ -51,7 +51,7 @@ class Block(sphere):
 		self.surfaces = []
 
 		pos = vector(px, py, pz) * (face_d - 0.5*face_g)
-		size = vector(face_w,face_w,face_w) * (1 + face_g)
+		size = vector(face_w,face_w,face_w) * (1.0 + 2.0 * face_g)
 		self.blind = box( frame=cube.frame, pos=pos, size=size, color=(1,1,1) )
 	
 	def get_colors(self):

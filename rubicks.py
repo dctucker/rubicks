@@ -140,7 +140,19 @@ def select_block(coord):
 		camera.snap_to_block()
 
 
-scene = display( title="Rubick.py", width=800, height=600, background=(0.2,0.2,0.3) )
+scene = display( title="Rubick.py", width=800, height=600, background=(0.1,0.1,0.2) )
+scene.lights = [
+	#distant_light(direction=(1, 0, 0), color=color.gray(0.6)),
+	#distant_light(direction=(0,  3, -3), color=color.gray(0.9)),
+	local_light(  pos=(0, 0, 5), color=color.gray(0.5)),
+	local_light(  pos=(3, -1, 3), color=color.gray(0.3)),
+	local_light(  pos=(-3, -1, 3), color=color.gray(0.3)),
+	local_light(  pos=(0, 8, 1), color=color.gray(0.4))
+]
+scene.range = (4,4,10)
+background = box( pos=(0,0,-10), size=(20,20,0.01), color=(0.2,0.2,0.2), material=materials.wood )
+#background = box( pos=(-3,-1.5,-9), size=(4,0.1,8), color=(0.0,0.0,0.0), material=materials.rough )
+#background = box( pos=(-4,-3,-9), size=(4.5,4,0.1), color=(0.0,0.0,0.0), material=materials.rough )
 scene.bind('keydown', keydown)
 scene.bind('keyup'  , keyup)
 scene.bind('mousemove', mousemove)
@@ -149,22 +161,22 @@ cube = Cube()
 solver = Solver(cube)
 camera = Camera(scene, cube)
 rot = 45
-camera.mirrors.append( Mirror(cube,'L', (-1.8,    0,    1), radians(-90 )))
-camera.mirrors.append( Mirror(cube,'R', ( 1.8,    0,    1), radians( 90 )))
-camera.mirrors.append( Mirror(cube,'U', (   0,  1.4,    0), radians(  0 )))
-camera.mirrors.append( Mirror(cube,'D', (   0, -1.4,    0), radians(  0 )))
-camera.mirrors.append( Mirror(cube,'B', ( 1.4, -1.2, -2.5), radians(  0 )))
-camera.mirrors[0].frame.rotate(angle=radians(-45), axis=(0,1,0), origin=camera.mirrors[0].frame.pos)
-camera.mirrors[1].frame.rotate(angle=radians( 45), axis=(0,1,0), origin=camera.mirrors[1].frame.pos)
-camera.mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=camera.mirrors[2].frame.pos)
-camera.mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=camera.mirrors[3].frame.pos)
-camera.mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=camera.mirrors[4].frame.pos)
+#camera.mirrors.append( Mirror(cube,'L', (-1.8,    0,    1), radians(-90 )))
+#camera.mirrors.append( Mirror(cube,'R', ( 1.8,    0,    1), radians( 90 )))
+#camera.mirrors.append( Mirror(cube,'U', (   0,  1.4,    0), radians(  0 )))
+#camera.mirrors.append( Mirror(cube,'D', (   0, -1.4,    0), radians(  0 )))
+#camera.mirrors.append( Mirror(cube,'B', ( 1.4, -1.2, -2.5), radians(  0 )))
+#camera.mirrors[0].frame.rotate(angle=radians(-45), axis=(0,1,0), origin=camera.mirrors[0].frame.pos)
+#camera.mirrors[1].frame.rotate(angle=radians( 45), axis=(0,1,0), origin=camera.mirrors[1].frame.pos)
+#camera.mirrors[2].frame.rotate(angle=radians(-45), axis=(1,0,0), origin=camera.mirrors[2].frame.pos)
+#camera.mirrors[3].frame.rotate(angle=radians(225), axis=(1,0,0), origin=camera.mirrors[3].frame.pos)
+#camera.mirrors[4].frame.rotate(angle=radians(-45), axis=(1,1,0), origin=camera.mirrors[4].frame.pos)
 
 double = Double(cube)
 
 #pointer = arrow( pos=(0,0,0), axis=cube.frame.axis)
-queue_label   = label( title="Q: ", pos=(-1.8,-1,0), xoffset=1, box=False )
-forward_label = label( title=""   , pos=(0, 1.0, 0), xoffset=1, box=False )
+queue_label   = label( title="Q: ", pos=(-3,-3,0), xoffset=1, box=False )
+forward_label = label( title=""   , pos=(0, 4, 0), xoffset=1, box=False )
 
 while 1:
 	rate(60)

@@ -75,7 +75,11 @@ class Camera:
 class Double:
 	def __init__(self, cube):
 		self.cube = cube
-		self.frame = frame( pos=(-2,-2,-3) )
+		self.frame = frame( pos=(-4,-2.7, -7), size=(0.3,0.3,0.3) )
+		shield   = box( frame=self.frame, pos=(-0.5,0, 2), size=(5,4,0), color=color.gray(0.1), opacity=0.3, material=materials.shiny)
+		backdrop = box( frame=self.frame, pos=(-0.5,0,-2), size=(5,4,0), color=(0.1,0.15,0.2), opacity=0.4, material=materials.unshaded)
+		#shield.rotate(angle=radians(-15), axis=(1,0,0), origin=(0,0,0))
+		#shield.rotate(angle=radians( 15), axis=(0,1,0), origin=(0,0,0))
 		self.blocks = []
 		self.surfaces = []
 		for b in range(len(self.cube.blocks)):
@@ -83,14 +87,18 @@ class Double:
 			for s in range(len(self.cube.blocks[b].surfaces)):
 				surface = self.cube.blocks[b].surfaces[s]
 				size = (0.35,0.35,0.35)
-				self.blocks[b].append( box( frame=self.frame, pos=surface.pos, size=size, color=surface.color ) )
+				newbox = box( frame=self.frame, pos=surface.pos, size=size, color=surface.color )
+				newbox.rotate(angle=radians(45), axis=(1,1,0), origin=(0,0,0))
+				newbox.material = materials.rough
+				self.blocks[b].append( newbox )
 
 	def tick(self):
 		for b in range(len(self.cube.blocks)):
 			for s in range(len(self.cube.blocks[b].surfaces)):
 				surface = self.cube.blocks[b].surfaces[s]
-				self.blocks[b][s].pos = self.cube.frame.frame_to_world(surface.pos.rotate(angle=radians(180), axis=(0,1,0)) )
-				self.blocks[b][s].axis = surface.axis
+				pos = -surface.pos
+				self.blocks[b][s].pos = self.cube.frame.frame_to_world( pos )
+				#self.blocks[b][s].axis = surface.axis
 
 class Mirror:
 	def __init__(self, cube, axle, pos, rotate):

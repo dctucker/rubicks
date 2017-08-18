@@ -1,5 +1,8 @@
 #!/usr/local/bin/python2.7
 
+from PIL import Image
+import records
+import nvector as nv
 from visual import *
 
 def keydown(evt):
@@ -77,8 +80,8 @@ sun_radius = 695700
 e_distance = 149597870.7
 e_radius = 6371
 
-scene = display( title="Earth", width=800, height=600, background=(0.0,0.0,0.0) )
-scene.autoscale = False
+scene = display( title="Earth", width=1200, height=800, background=(0.0,0.0,0.0) )
+#scene.autoscale = False
 scene.lights = [
 	distant_light(direction=(0, 0, 1), color=color.gray(0.6)),
 	#distant_light(direction=(0,  3, -3), color=color.gray(0.9)),
@@ -94,32 +97,75 @@ scene.bind('keyup'  , keyup)
 scene.bind('mousemove', mousemove)
 
 #sun = sphere( pos=(e_distance,0,0), radius=sun_radius, material=materials.emissive, color=(1,1,1) )
-earth = sphere( pos=(0,0,0), radius=e_radius, material=materials.earth )
+im = Image.open('Day_lrg.jpg')
+im = im.resize((2048,2048), Image.ANTIALIAS)
+earth_tex = materials.texture(data=im, mapping="spherical")
+earth = sphere( pos=(0,0,0), radius=e_radius, material=earth_tex )
 earth.rotate( angle=radians(90), axis=(0,1,0), origin=earth.pos )
 flattening = 0 #1/298.257223563
 eccentricity = 2 * flattening - flattening ** 2
-height = e_radius
 
-def poi( latitude, longitude ):
-	latitude  = radians(latitude)
-	longitude = -radians(longitude)
+def poi( latitude, longitude, altitude=0 ):
+	lat =  radians(latitude)
+	lon = -radians(longitude)
 	#curvature = 1.0 / sqrt( 1 - eccentricity ** 2 * sin( latitude ) )
-	curvature = 0
+	curv = 0
 	pos = vector( \
-		(curvature + height) * cos( latitude ) * cos( longitude ), \
-		(curvature * (1 - eccentricity ** 2) + height) * sin( latitude ), \
-		(curvature + height) * cos( latitude ) * sin( longitude ) \
+		(curv + e_radius + altitude) * cos( lat ) * cos( lon ), \
+		(curv * (1 - eccentricity ** 2) + e_radius + altitude) * sin( lat ), \
+		(curv + e_radius + altitude) * cos( lat ) * sin( lon ) \
 	)
+	vector.longitude = longitude
+	vector.latitude  = latitude
+	vector.altitude  = altitude
 	return pos
 
-def poi_sphere( latitude, longitude ):
-	return sphere( pos=poi(latitude, longitude), color=(1,1,0), radius=100 )
+def poi_sphere( latitude, longitude, color=(1,1,0) ):
+	s = sphere( pos=poi(latitude, longitude), color=color, radius=50 )
+	s.longitude = longitude
+	s.latitude = latitude
+	return s
 
-san_diego = poi_sphere(32.75, -117)
-mexico_city = poi_sphere(19.43333, -99.13333)
-san_jose = poi_sphere(9.9333, -84.08333)
+def arc( poi1, poi2 ):
+	points = []
+	frame_E = nv.FrameE(a=e_radius * 1000, f=0)
+	gp1 = frame_E.GeoPoint(latitude=poi1.latitude, longitude=poi1.longitude, degrees=True)
+	gp2 = frame_E.GeoPoint(latitude=poi2.latitude, longitude=poi2.longitude, degrees=True)
 
-arc = curve( pos=[ san_diego.pos, 1.05*san_diego.pos, 1.05*mexico_city.pos, mexico_city.pos ] )
+	path = nv.GeoPath(gp1, gp2)
+	for i in range(0, 21):
+		geo = path.interpolate(0.05*i).to_geo_point()
+		points += [ poi( geo.latitude_deg, geo.longitude_deg, 10 ) ]
+	return points
+
+db = records.Database('mysql://localhost/lang')
+
+source_iata_code = 'NRT'
+source_airport = db.query("""
+	SELECT latitude, longitude, iata_code, country_name
+	FROM airports
+	WHERE iata_code='%s'
+""" % (source_iata_code))[0]
+
+routes = db.query("""
+	SELECT DISTINCT latitude, longitude, country_name, iata_code, airports.city_name
+	FROM routes
+	INNER JOIN airports on airports.iata_code = routes.destination_airport_code
+	WHERE source_airport_code='%s'
+	-- AND airline_code='DL'
+""" % (source_airport.iata_code))
+
+source = poi_sphere(source_airport.latitude, source_airport.longitude)
+for r in routes:
+	if source_airport.country_name != r.country_name:
+		color=(1,1,0)
+	else:
+		color=(0,1,1)
+	dest = poi_sphere( r.latitude, r.longitude, color=color )
+	curve( pos=arc( source, dest ), color=color, radius=20 )
+	label( pos=dest.pos, text=r.city_name, box=False, line=False, opacity=0, yoffset=10, space=20 )
+	print r.latitude, r.longitude
+
 
 scene.center = (0,0,0)
 #scene.range = (4*e_distance, 4*e_distance, 4*e_distance)

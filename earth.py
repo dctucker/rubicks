@@ -6,7 +6,7 @@ import nvector as nv
 from visual import *
 
 def keydown(evt):
-	global iata_code, iata_label
+	global iata_code, iata_label, total_distance
 	k = evt.key
 
 	if k == 'esc':
@@ -28,6 +28,7 @@ def keydown(evt):
 		iata_label.visible = True
 		iata_label.text = iata_code
 	elif k == '\n':
+		total_distance = 0
 		iata_label.text = ''
 		iata_label.visible = False
 		load_iata()
@@ -54,11 +55,12 @@ def mousemove(evt):
 			pick.opacity = 1.0
 
 def click(evt):
-	global iata_code, shapes
+	global iata_code, shapes, total_distance
 	pick = scene.mouse.pick
 	if pick in shapes:
 		if hasattr(pick, 'iata_code'):
 			iata_code = pick.iata_code
+			total_distance += pick.distance
 			load_iata()
 
 
@@ -127,17 +129,19 @@ def arc( poi1, poi2 ):
 	gp2 = frame_E.GeoPoint(latitude=poi2.latitude, longitude=poi2.longitude, degrees=True)
 
 	distance, _azia, _azib = gp1.distance_and_azimuth(gp2)
-	distance = int(distance/50000)
+	distance = max(1, int(distance/50000))
 	path = nv.GeoPath(gp1, gp2)
 	for i in range(0, distance+1):
 		geo = path.interpolate((1.0/distance)*i).to_geo_point()
 		points += [ poi( geo.latitude_deg, geo.longitude_deg, 10 ) ]
 	return points
 
-db = records.Database('mysql://localhost/lang')
+db = records.Database('mysql+pymysql://casey@localhost:33306/lang')
 
 def load_iata():
-	global shapes, iata_code, routes, routes_index, source_airport, source
+	global shapes, iata_code, routes, routes_index, source_airport, source, total_distance
+	print total_distance
+
 	code = ''+iata_code
 	iata_code = ''
 	source_airport = db.query("""
@@ -193,6 +197,7 @@ def load_next_route():
 
 	dest = poi_sphere( r.latitude, r.longitude, color=color )
 	dest.iata_code = r.iata_code
+	dest.distance = r.distance
 	waypoints = points( pos=arc( source, dest ), color=color )
 	text = r.iata_code
 	try:
@@ -207,10 +212,11 @@ def load_next_route():
 scene.center = (0,0,0)
 #scene.range = (4*e_distance, 4*e_distance, 4*e_distance)
 scene.range = (2*e_radius, 2*e_radius, 2*e_radius)
+total_distance = 0
 routes = []
 routes_index = 0
 shapes = []
-iata_code = 'ILM'
+iata_code = 'SAN'
 source_airport = {}
 source = {}
 iata_label = label(pos=scene.up, visible=False)

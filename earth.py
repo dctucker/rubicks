@@ -136,7 +136,7 @@ def arc( poi1, poi2 ):
 		points += [ poi( geo.latitude_deg, geo.longitude_deg, 10 ) ]
 	return points
 
-db = records.Database('mysql+pymysql://casey@localhost:33306/lang')
+db = records.Database('mysql+pymysql://casey@localhost:3306/lang')
 
 def load_iata():
 	global shapes, iata_code, routes, routes_index, source_airport, source, total_distance
@@ -153,6 +153,7 @@ def load_iata():
 	routes = db.query("""
 		SELECT airports.latitude, airports.longitude, airports.country_name, airports.iata_code, airports.city_name,
 			MIN(airline_code) AS airline_code,
+			atan2( airports.latitude - source.latitude, airports.longitude - source.longitude ) AS direction,
 			haversine( source.latitude, source.longitude, airports.latitude, airports.longitude ) as distance
 		FROM routes
 		INNER JOIN airports ON airports.iata_code = routes.destination_airport_code
@@ -161,7 +162,7 @@ def load_iata():
 		-- AND airline_code='DL'
 		GROUP BY airports.latitude, airports.longitude, airports.country_name, airports.iata_code, airports.city_name,
 			source.latitude, source.longitude
-		ORDER BY distance
+		ORDER BY direction DESC
 	""" % (code)).all()
 
 	for s in shapes:

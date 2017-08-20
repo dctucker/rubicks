@@ -6,7 +6,7 @@ import nvector as nv
 from visual import *
 
 def keydown(evt):
-	global iata_code
+	global iata_code, iata_label
 	k = evt.key
 
 	if k == 'esc':
@@ -25,7 +25,11 @@ def keydown(evt):
 		camera.d_theta_z = radians(0.5)
 	elif (k >= 'A' and k <= 'Z') or (k >='a' and k <='z'):
 		iata_code += k
+		iata_label.visible = True
+		iata_label.text = iata_code
 	elif k == '\n':
+		iata_label.text = ''
+		iata_label.visible = False
 		load_iata()
 	else:
 		print vars(evt)
@@ -40,7 +44,23 @@ def keyup(evt):
 		camera.d_theta_z = 0
 
 def mousemove(evt):
+	return
 	pick = scene.mouse.pick
+	if pick in shapes:
+		if hasattr(pick, 'iata_code'):
+			for s in shapes:
+				if hasattr(s, 'iata_code'):
+					s.opacity = 0.3
+			pick.opacity = 1.0
+
+def click(evt):
+	global iata_code, shapes
+	pick = scene.mouse.pick
+	if pick in shapes:
+		if hasattr(pick, 'iata_code'):
+			iata_code = pick.iata_code
+			load_iata()
+
 
 
 sun_radius = 695700
@@ -63,6 +83,7 @@ scene.lights = [
 scene.bind('keydown', keydown)
 scene.bind('keyup'  , keyup)
 scene.bind('mousemove', mousemove)
+scene.bind('click', click)
 
 #sun = sphere( pos=(e_distance,0,0), radius=sun_radius, material=materials.emissive, color=(1,1,1) )
 im = Image.open('moonmap4k.jpg')
@@ -116,7 +137,7 @@ def arc( poi1, poi2 ):
 db = records.Database('mysql://localhost/lang')
 
 def load_iata():
-	global shapes, iata_code
+	global shapes, iata_code, routes, routes_index, source_airport, source
 	code = ''+iata_code
 	iata_code = ''
 	source_airport = db.query("""
@@ -126,12 +147,18 @@ def load_iata():
 	""" % (code))[0]
 
 	routes = db.query("""
-		SELECT DISTINCT latitude, longitude, country_name, iata_code, airports.city_name
+		SELECT airports.latitude, airports.longitude, airports.country_name, airports.iata_code, airports.city_name,
+			MIN(airline_code) AS airline_code,
+			haversine( source.latitude, source.longitude, airports.latitude, airports.longitude ) as distance
 		FROM routes
-		INNER JOIN airports on airports.iata_code = routes.destination_airport_code
-		WHERE source_airport_code='%s'
+		INNER JOIN airports ON airports.iata_code = routes.destination_airport_code
+		INNER JOIN airports AS source ON source.iata_code = routes.source_airport_code
+		WHERE routes.source_airport_code='%s'
 		-- AND airline_code='DL'
-	""" % (code))
+		GROUP BY airports.latitude, airports.longitude, airports.country_name, airports.iata_code, airports.city_name,
+			source.latitude, source.longitude
+		ORDER BY distance
+	""" % (code)).all()
 
 	for s in shapes:
 		s.visible = False
@@ -139,27 +166,57 @@ def load_iata():
 
 	shapes = []
 	source = poi_sphere(source_airport.latitude, source_airport.longitude)
+	source.iata_code = code
 	shapes += [source]
-	for r in routes:
-		if source_airport.country_name != r.country_name:
-			color=(1,1,0)
-		else:
-			color=(0,1,1)
-		dest = poi_sphere( r.latitude, r.longitude, color=color )
-		waypoints = points( pos=arc( source, dest ), color=color )
-		dest_label = label( pos=dest.pos, text=r.city_name+" - "+r.iata_code, box=False, line=False, opacity=0, yoffset=10, space=20 )
-		print r.latitude, r.longitude
-		shapes += [ dest, waypoints, dest_label ]
-	return shapes
+	routes_index = 0
+
+def load_next_route():
+	global shapes, source_airport, routes, routes_index, source
+
+	if routes_index >= len(routes):
+		return
+
+	r = routes[ routes_index ]
+	routes_index += 1
+
+	if source_airport.country_name != r.country_name:
+		color=(1,1,1)
+	else:
+		color=(0.6,0.6,0.6)
+
+	if r.airline_code == 'DL':
+		color = (1,0,0)
+	elif r.airline_code in ('AA','UA'):
+		color = (0.2,0.6,1)
+	elif r.airline_code == 'WN':
+		color = (1.0,0.8,0.15)
+
+	dest = poi_sphere( r.latitude, r.longitude, color=color )
+	dest.iata_code = r.iata_code
+	waypoints = points( pos=arc( source, dest ), color=color )
+	text = r.iata_code
+	try:
+		text += ' - ' + r.city_name.encode('ascii')
+	except UnicodeDecodeError:
+		pass
+	dest_label = label( pos=dest.pos, text=text, box=False, line=False, opacity=0, yoffset=10, space=20 )
+	#print r.latitude, r.longitude
+	shapes += [ dest, waypoints, dest_label ]
 
 
 scene.center = (0,0,0)
 #scene.range = (4*e_distance, 4*e_distance, 4*e_distance)
 scene.range = (2*e_radius, 2*e_radius, 2*e_radius)
+routes = []
+routes_index = 0
 shapes = []
 iata_code = 'ILM'
-shapes = load_iata()
+source_airport = {}
+source = {}
+iata_label = label(pos=scene.up, visible=False)
+load_iata()
 
 while 1:
 	rate(60)
+	load_next_route()
 

@@ -12,17 +12,13 @@ def keydown(evt):
 	if k == 'esc':
 		exit()
 	elif k == 'left':
-		camera.d_theta_x = radians(-2)
+		earth_frame.rotate( angle=radians(10), axis=(0,1,0) )
 	elif k == 'right':
-		camera.d_theta_x = radians(2)
+		earth_frame.rotate( angle=radians(-10), axis=(0,1,0) )
 	elif k == 'down':
-		camera.d_theta_y = radians(2)
+		earth_frame.rotate( angle=radians(-10), axis=(1,0,0) )
 	elif k == 'up':
-		camera.d_theta_y = radians(-2)
-	elif k == 'page up':
-		camera.d_theta_z = radians(-0.5)
-	elif k == 'page down':
-		camera.d_theta_z = radians(0.5)
+		earth_frame.rotate( angle=radians(10), axis=(1,0,0) )
 	elif (k >= 'A' and k <= 'Z') or (k >='a' and k <='z'):
 		iata_code += k
 		iata_label.visible = True
@@ -64,43 +60,6 @@ def click(evt):
 			load_iata()
 
 
-
-sun_radius = 695700
-e_distance = 149597870.7
-e_radius = 6371
-moon_earth_distance = 384400
-
-scene = display( title="Earth", width=1200, height=800, background=(0.0,0.0,0.0) )
-#scene.autoscale = False
-scene.lights = [
-	distant_light(direction=(0, 0, 1), color=color.gray(0.6)),
-	#distant_light(direction=(0,  3, -3), color=color.gray(0.9)),
-	#local_light(  pos=(0, 0, 5), color=color.gray(0.3)),
-	#local_light(  pos=(3, -1, 3), color=color.gray(0.3)),
-	#local_light(  pos=(-3, -1, 3), color=color.gray(0.3)),
-	local_light(  pos=(e_distance, 0, 0), color=color.gray(1.0)),
-	local_light(  pos=(-e_distance, 0, 0), color=color.gray(0.5))
-]
-#background = box( pos=(0,0,-10), size=(20,20,0.01), color=(0.2,0.1,0.0), material=materials.wood )
-scene.bind('keydown', keydown)
-scene.bind('keyup'  , keyup)
-scene.bind('mousemove', mousemove)
-scene.bind('click', click)
-
-#sun = sphere( pos=(e_distance,0,0), radius=sun_radius, material=materials.emissive, color=(1,1,1) )
-im = Image.open('moonmap4k.jpg')
-im = im.resize((4096,2048), Image.ANTIALIAS)
-moon_tex = materials.texture(data=im, mapping="spherical")
-moon = sphere( pos=(moon_earth_distance, 0, 0), radius=1738, material=moon_tex )
-
-im = Image.open('PathfinderMap.jpg')
-#im = im.resize((2048,2048), Image.ANTIALIAS)
-earth_tex = materials.texture(data=im, mapping="spherical")
-earth = sphere( pos=(0,0,0), radius=e_radius, material=earth_tex )
-earth.rotate( angle=radians(90), axis=(0,1,0), origin=earth.pos )
-flattening = 0 #1/298.257223563
-eccentricity = 2 * flattening - flattening ** 2
-
 def poi( latitude, longitude, altitude=0 ):
 	lat =  radians(latitude)
 	lon = -radians(longitude)
@@ -135,8 +94,6 @@ def arc( poi1, poi2 ):
 		geo = path.interpolate((1.0/distance)*i).to_geo_point()
 		points += [ poi( geo.latitude_deg, geo.longitude_deg, 10 ) ]
 	return points
-
-db = records.Database('mysql+pymysql://casey@localhost:3306/lang')
 
 def load_iata():
 	global shapes, iata_code, routes, routes_index, source_airport, source, total_distance
@@ -209,10 +166,50 @@ def load_next_route():
 	#print r.latitude, r.longitude
 	shapes += [ dest, waypoints, dest_label ]
 
+# CONSTANTS
+sun_radius = 695700
+e_distance = 149597870.7
+e_radius = 6371
+moon_earth_distance = 384400
+moon_radius = 1738
 
+# SCENE
+scene = display( title="Earth", width=1200, height=800, background=(0.0,0.0,0.0) )
 scene.center = (0,0,0)
-#scene.range = (4*e_distance, 4*e_distance, 4*e_distance)
 scene.range = (2*e_radius, 2*e_radius, 2*e_radius)
+#scene.autoscale = False
+scene.lights = [
+	distant_light(direction=(0, 0, 1), color=color.gray(0.6)),
+	#distant_light(direction=(0,  3, -3), color=color.gray(0.9)),
+	#local_light(  pos=(0, 0, 5), color=color.gray(0.3)),
+	#local_light(  pos=(3, -1, 3), color=color.gray(0.3)),
+	#local_light(  pos=(-3, -1, 3), color=color.gray(0.3)),
+	local_light(  pos=(e_distance, 0, 0), color=color.gray(1.0)),
+	local_light(  pos=(-e_distance, 0, 0), color=color.gray(0.5))
+]
+scene.bind('keydown', keydown)
+scene.bind('keyup'  , keyup)
+scene.bind('mousemove', mousemove)
+scene.bind('click', click)
+
+
+# TEXTURES
+im = Image.open('moonmap4k.jpg')
+im = im.resize((4096,2048), Image.ANTIALIAS)
+moon_tex = materials.texture(data=im, mapping="spherical")
+
+im = Image.open('PathfinderMap.jpg')
+#im = im.resize((2048,2048), Image.ANTIALIAS)
+earth_tex = materials.texture(data=im, mapping="spherical")
+
+earth_frame = frame()
+#sun = sphere( pos=(e_distance,0,0), radius=sun_radius, material=materials.emissive, color=(1,1,1) )
+moon = sphere( frame=earth_frame, pos=(moon_earth_distance, 0, 0), radius=moon_radius, material=moon_tex )
+earth = sphere( frame=earth_frame, pos=(0,0,0), radius=e_radius, material=earth_tex )
+earth.rotate( angle=radians(90), axis=(0,1,0), origin=earth.pos )
+flattening = 0  # 1.0 / 298.257223563
+eccentricity = 2 * flattening - flattening ** 2
+
 total_distance = 0
 routes = []
 routes_index = 0
@@ -221,6 +218,8 @@ iata_code = 'SAN'
 source_airport = {}
 source = {}
 iata_label = label(pos=scene.up, visible=False)
+
+db = records.Database('mysql+pymysql://casey@localhost:3306/lang')
 load_iata()
 
 while 1:

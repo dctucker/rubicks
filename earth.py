@@ -5,20 +5,29 @@ import records
 import nvector as nv
 from visual import *
 
+camera_dx = 0
+camera_dy = 0
+
+def camera_tick():
+	global camera_dx, camera_dy
+	earth_frame.rotate( angle=radians(camera_dx), axis=(0,1,0) )
+	scene.forward = scene.forward.rotate( angle=radians(camera_dy), axis=(1,0,0) )
+
 def keydown(evt):
 	global iata_code, iata_label, total_distance
+	global camera_dx, camera_dy
 	k = evt.key
 
 	if k == 'esc':
 		exit()
 	elif k == 'left':
-		earth_frame.rotate( angle=radians(10), axis=(0,1,0) )
+		camera_dx = 1
 	elif k == 'right':
-		earth_frame.rotate( angle=radians(-10), axis=(0,1,0) )
+		camera_dx = -1
 	elif k == 'down':
-		earth_frame.rotate( angle=radians(-10), axis=(1,0,0) )
+		camera_dy = 1
 	elif k == 'up':
-		earth_frame.rotate( angle=radians(10), axis=(1,0,0) )
+		camera_dy = -1
 	elif (k >= 'A' and k <= 'Z') or (k >='a' and k <='z'):
 		iata_code += k
 		iata_label.visible = True
@@ -32,11 +41,12 @@ def keydown(evt):
 		print vars(evt)
 
 def keyup(evt):
+	global camera_dx, camera_dy
 	k = evt.key
 	if k in ('left','right'):
-		camera.d_theta_x = 0
+		camera_dx = 0
 	elif k in ('up','down'):
-		camera.d_theta_y = 0
+		camera_dy = 0
 	elif k in ('page up','page down'):
 		camera.d_theta_z = 0
 
@@ -76,7 +86,7 @@ def poi( latitude, longitude, altitude=0 ):
 	return pos
 
 def poi_sphere( latitude, longitude, color=(1,1,0) ):
-	s = sphere( pos=poi(latitude, longitude), color=color, radius=50, opacity=0.3 )
+	s = sphere( frame=earth_frame, pos=poi(latitude, longitude), color=color, radius=50, opacity=0.3 )
 	s.longitude = longitude
 	s.latitude = latitude
 	return s
@@ -156,13 +166,13 @@ def load_next_route():
 	dest = poi_sphere( r.latitude, r.longitude, color=color )
 	dest.iata_code = r.iata_code
 	dest.distance = r.distance
-	waypoints = points( pos=arc( source, dest ), color=color )
+	waypoints = points( frame=earth_frame, pos=arc( source, dest ), color=color )
 	text = r.iata_code
 	try:
 		text += ' - ' + r.city_name.encode('ascii')
 	except UnicodeDecodeError:
 		pass
-	dest_label = label( pos=dest.pos, text=text, box=False, line=False, opacity=0, yoffset=10, space=20 )
+	dest_label = label( frame=earth_frame, pos=dest.pos, text=text, box=False, line=False, opacity=0, yoffset=10, space=20 )
 	#print r.latitude, r.longitude
 	shapes += [ dest, waypoints, dest_label ]
 
@@ -184,8 +194,8 @@ scene.lights = [
 	#local_light(  pos=(0, 0, 5), color=color.gray(0.3)),
 	#local_light(  pos=(3, -1, 3), color=color.gray(0.3)),
 	#local_light(  pos=(-3, -1, 3), color=color.gray(0.3)),
-	local_light(  pos=(e_distance, 0, 0), color=color.gray(1.0)),
-	local_light(  pos=(-e_distance, 0, 0), color=color.gray(0.5))
+	local_light(  pos=(e_distance,  e_distance,  -e_distance), color=color.gray(1.0)),
+	local_light(  pos=(e_distance,  e_distance,  e_distance), color=color.gray(0.5))
 ]
 scene.bind('keydown', keydown)
 scene.bind('keyup'  , keyup)
@@ -225,4 +235,5 @@ load_iata()
 while 1:
 	rate(60)
 	load_next_route()
+	camera_tick()
 

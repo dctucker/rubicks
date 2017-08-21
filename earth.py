@@ -7,15 +7,19 @@ from visual import *
 
 camera_dx = 0
 camera_dy = 0
+camera_dz = 0
 
 def camera_tick():
-	global camera_dx, camera_dy
+	global camera_dx, camera_dy, camera_dz
 	earth_frame.rotate( angle=radians(camera_dx), axis=(0,1,0) )
 	scene.forward = scene.forward.rotate( angle=radians(camera_dy), axis=(1,0,0) )
+	fov = scene.fov + radians( camera_dz )
+	if fov > 0.0 and fov < 3.14:
+		scene.fov = fov
 
 def keydown(evt):
 	global iata_code, iata_label, total_distance
-	global camera_dx, camera_dy
+	global camera_dx, camera_dy, camera_dz
 	k = evt.key
 
 	if k == 'esc':
@@ -28,6 +32,10 @@ def keydown(evt):
 		camera_dy = 1
 	elif k == 'up':
 		camera_dy = -1
+	elif k == '=':
+		camera_dz = 1
+	elif k == '-':
+		camera_dz = -1
 	elif (k >= 'A' and k <= 'Z') or (k >='a' and k <='z'):
 		iata_code += k
 		iata_label.visible = True
@@ -41,14 +49,14 @@ def keydown(evt):
 		print vars(evt)
 
 def keyup(evt):
-	global camera_dx, camera_dy
+	global camera_dx, camera_dy, camera_dz
 	k = evt.key
 	if k in ('left','right'):
 		camera_dx = 0
 	elif k in ('up','down'):
 		camera_dy = 0
-	elif k in ('page up','page down'):
-		camera.d_theta_z = 0
+	elif k in ('-','='):
+		camera_dz = 0
 
 def mousemove(evt):
 	return
@@ -185,8 +193,9 @@ moon_radius = 1738
 
 # SCENE
 scene = display( title="Earth", width=1200, height=800, background=(0.0,0.0,0.0) )
+scene.fov = radians(1)
 scene.center = (0,0,0)
-scene.range = (2*e_radius, 2*e_radius, 2*e_radius)
+scene.range = (e_radius, e_radius, e_radius)
 #scene.autoscale = False
 scene.lights = [
 	distant_light(direction=(0, 0, 1), color=color.gray(0.6)),

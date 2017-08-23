@@ -93,8 +93,8 @@ def poi( latitude, longitude, altitude=0 ):
 	vector.altitude  = altitude
 	return pos
 
-def poi_sphere( latitude, longitude, color=(1,1,0) ):
-	s = sphere( frame=earth_frame, pos=poi(latitude, longitude), color=color, radius=50, opacity=0.3 )
+def poi_sphere( latitude, longitude, color=(1,0.5,1) ):
+	s = sphere( frame=earth_frame, pos=poi(latitude, longitude), color=color, radius=50, opacity=0.4 )
 	s.longitude = longitude
 	s.latitude = latitude
 	return s
@@ -171,7 +171,7 @@ def load_next_route():
 	elif r.airline_code == 'WN':
 		color = (1.0,0.8,0.15)
 
-	dest = poi_sphere( r.latitude, r.longitude, color=color )
+	dest = poi_sphere( r.latitude, r.longitude, color=(1, 0.5, 0.5) )
 	dest.iata_code = r.iata_code
 	dest.distance = r.distance
 	waypoints = points( frame=earth_frame, pos=arc( source, dest ), color=color )
@@ -180,7 +180,7 @@ def load_next_route():
 		text += ' - ' + r.city_name.encode('ascii')
 	except UnicodeDecodeError:
 		pass
-	dest_label = label( frame=earth_frame, pos=dest.pos, text=text, box=False, line=False, opacity=0, yoffset=10, space=20 )
+	dest_label = label( frame=earth_frame, pos=dest.pos, text=text, box=False, line=False, opacity=0.7, yoffset=3, space=5, color=(1,0.5,0.5) )
 	#print r.latitude, r.longitude
 	shapes += [ dest, waypoints, dest_label ]
 
